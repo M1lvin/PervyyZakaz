@@ -1,10 +1,12 @@
 import { useState, type FormEvent } from 'react'
-import { skills, type Order, type OrderResponse } from '../data/orders'
+import { skills, type MyOrder, type OrderResponse } from '../data/orders'
 
 const responsesStorageKey = 'pervyy-zakaz-responses-v1'
 
 interface FeedProps {
-  orders: Order[]
+  orders: MyOrder[]
+  userId: string
+  onTakeOrder: (orderId: string, price: number, days: number) => void
   notice?: string | null
 }
 
@@ -23,7 +25,7 @@ interface ResponseErrors {
 
 const emptyDraft: ResponseDraft = { price: '', days: '', message: '' }
 
-function responseForOrder(order: Order): OrderDraftForm {
+function responseForOrder(order: MyOrder): OrderDraftForm {
   return { ...emptyDraft, price: String(order.price), days: String(order.days) }
 }
 
@@ -40,18 +42,18 @@ function readResponses(): OrderResponse[] {
   return parsed as OrderResponse[]
 }
 
-export default function Feed({ orders, notice }: FeedProps) {
+export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps) {
   const [skillFilter, setSkillFilter] = useState<string>('Все')
   const [openOrderId, setOpenOrderId] = useState<string | null>(null)
   const [draft, setDraft] = useState<ResponseDraft>(emptyDraft)
   const [errors, setErrors] = useState<ResponseErrors>({})
-  const [sentOrderIds, setSentOrderIds] = useState<Set<string>>(() => new Set())
 
   const visibleOrders = orders.filter(
-    (order) => skillFilter === 'Все' || order.skill === skillFilter,
+    (order) =>
+      order.status === 'open' && (skillFilter === 'Все' || order.skill === skillFilter),
   )
 
-  function openResponseForm(order: Order) {
+  function openResponseForm(order: MyOrder) {
     setOpenOrderId(order.id)
     setDraft(responseForOrder(order))
     setErrors({})
@@ -63,7 +65,7 @@ export default function Feed({ orders, notice }: FeedProps) {
     setErrors({})
   }
 
-  function submitResponse(event: FormEvent<HTMLFormElement>, order: Order) {
+  function submitResponse(event: FormEvent<HTMLFormElement>, order: MyOrder) {
     event.preventDefault()
     const price = Number(draft.price)
     const days = Number(draft.days)
@@ -96,7 +98,7 @@ export default function Feed({ orders, notice }: FeedProps) {
     try {
       const responses = readResponses()
       localStorage.setItem(responsesStorageKey, JSON.stringify([...responses, response]))
-      setSentOrderIds((current) => new Set(current).add(order.id))
+      onTakeOrder(order.id, price, days)
       closeResponseForm()
     } catch {
       setErrors({ form: 'Не удалось сохранить отклик на этом устройстве. Попробуйте ещё раз.' })
@@ -144,11 +146,7 @@ export default function Feed({ orders, notice }: FeedProps) {
             </p>
             <p className="mb-3.5 mt-2.5 text-[15px]">{order.description}</p>
 
-            {sentOrderIds.has(order.id) ? (
-              <p role="status" className="text-sm font-semibold text-[#1f6f5c]">
-                Отклик отправлен
-              </p>
-            ) : openOrderId === order.id ? (
+            {openOrderId === order.id ? (
               <form
                 className="mt-3"
                 noValidate
@@ -241,13 +239,19 @@ export default function Feed({ orders, notice }: FeedProps) {
                 </div>
               </form>
             ) : (
-              <button
-                type="button"
-                onClick={() => openResponseForm(order)}
-                className="min-h-11 rounded-[10px] border border-[#1f6f5c] bg-[#1f6f5c] px-4 py-2.5 text-white"
-              >
-                Откликнуться
-              </button>
+              order.createdBy === userId ? (
+                <p className="text-[13px] text-[#6f6c64]">
+                  Это ваш заказ. Студенты увидят его здесь.
+                </p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => openResponseForm(order)}
+                  className="min-h-11 rounded-[10px] border border-[#1f6f5c] bg-[#1f6f5c] px-4 py-2.5 text-white"
+                >
+                  Откликнуться
+                </button>
+              )
             )}
           </article>
         ))

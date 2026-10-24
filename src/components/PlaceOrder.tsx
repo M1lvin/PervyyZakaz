@@ -205,7 +205,8 @@ export default function PlaceOrder({ onPublish }: PlaceOrderProps) {
 
         <button
           type="submit"
-          className="min-h-11 rounded-[10px] border border-[#1f6f5c] bg-[#1f6f5c] px-4 py-2.5 text-white"
+          className="sticky bottom-20 z-10 min-h-11 w-full rounded-[10px] border border-[#1f6f5c] bg-[#1f6f5c] px-4 py-2.5 text-white shadow-md"
+          style={{ backgroundColor: '#1F6F5C', color: '#FFFFFF' }}
         >
           Опубликовать заказ
         </button>

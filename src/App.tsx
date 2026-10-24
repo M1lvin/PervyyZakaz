@@ -1,21 +1,117 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Feed from './components/Feed'
+import MyOrders from './components/MyOrders'
 import PlaceOrder from './components/PlaceOrder'
-import { orders as initialOrders, type Order } from './data/orders'
+import {
+  orderStatuses,
+  orders as initialOrders,
+  skills,
+  type MyOrder,
+  type Order,
+  type OrderStatus,
+} from './data/orders'
 
 const tabs = ['Лента', 'Разместить', 'Мои заказы', 'Профиль'] as const
+const ordersStorageKey = 'pervyy-zakaz-orders-v1'
+const userIdStorageKey = 'pervyy-zakaz-user-v1'
 
 type Tab = (typeof tabs)[number]
 
+function asMyOrder(order: Order): MyOrder {
+  return {
+    ...order,
+    status: 'open',
+    createdBy: null,
+    takenBy: null,
+  }
+}
+
+function isMyOrder(value: unknown): value is MyOrder {
+  if (typeof value !== 'object' || value === null) return false
+  const order = value as Record<string, unknown>
+  return (
+    typeof order.id === 'string' &&
+    typeof order.title === 'string' &&
+    typeof order.business === 'string' &&
+    typeof order.description === 'string' &&
+    typeof order.days === 'number' &&
+    typeof order.price === 'number' &&
+    skills.some((skill) => skill === order.skill) &&
+    orderStatuses.some((status) => status === order.status) &&
+    (typeof order.createdBy === 'string' || order.createdBy === null) &&
+    (typeof order.takenBy === 'string' || order.takenBy === null) &&
+    (order.responsePrice === undefined || typeof order.responsePrice === 'number') &&
+    (order.responseDays === undefined || typeof order.responseDays === 'number')
+  )
+}
+
+function loadOrders(): MyOrder[] {
+  const stored = localStorage.getItem(ordersStorageKey)
+  if (stored === null) return initialOrders.map(asMyOrder)
+
+  const parsed: unknown = JSON.parse(stored)
+  if (!Array.isArray(parsed) || !parsed.every(isMyOrder)) {
+    throw new Error('Сохранённые заказы имеют неверный формат.')
+  }
+  return parsed
+}
+
+function loadUserId(): string {
+  const stored = localStorage.getItem(userIdStorageKey)
+  if (stored !== null) return stored
+
+  const userId = crypto.randomUUID()
+  localStorage.setItem(userIdStorageKey, userId)
+  return userId
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('Лента')
-  const [orders, setOrders] = useState<Order[]>(initialOrders)
+  const [userId] = useState(loadUserId)
+  const [orders, setOrders] = useState<MyOrder[]>(loadOrders)
   const [notice, setNotice] = useState<string | null>(null)
 
+  useEffect(() => {
+    localStorage.setItem(ordersStorageKey, JSON.stringify(orders))
+  }, [orders])
+
   function publishOrder(order: Order) {
-    setOrders((current) => [order, ...current])
+    setOrders((current) => [
+      { ...order, status: 'open', createdBy: userId, takenBy: null },
+      ...current,
+    ])
     setActiveTab('Лента')
     setNotice('Заказ опубликован')
+  }
+
+  function takeOrder(orderId: string, price: number, days: number) {
+    setOrders((current) =>
+      current.map((order) =>
+        order.id === orderId
+          ? {
+              ...order,
+              status: 'in_progress',
+              takenBy: userId,
+              responsePrice: price,
+              responseDays: days,
+            }
+          : order,
+      ),
+    )
+  }
+
+  function changeOrderStatus(orderId: string, status: OrderStatus) {
+    setOrders((current) =>
+      current.map((order) => {
+        const canMarkDone =
+          order.takenBy === userId && order.status === 'in_progress' && status === 'done'
+        const canMarkPaid =
+          order.createdBy === userId && order.status === 'done' && status === 'paid'
+        return order.id === orderId && (canMarkDone || canMarkPaid)
+          ? { ...order, status }
+          : order
+      }),
+    )
   }
 
   return (
@@ -27,11 +123,13 @@ export default function App() {
         </p>
       </header>
 
-      <main className="flex-1 px-4 pb-6 pt-1">
+      <main className="flex-1 px-4 pb-28 pt-1">
         {activeTab === 'Лента' ? (
-          <Feed orders={orders} notice={notice} />
+          <Feed orders={orders} userId={userId} onTakeOrder={takeOrder} notice={notice} />
         ) : activeTab === 'Разместить' ? (
           <PlaceOrder onPublish={publishOrder} />
+        ) : activeTab === 'Мои заказы' ? (
+          <MyOrders orders={orders} userId={userId} onStatusChange={changeOrderStatus} />
         ) : (
           <h2 className="text-base font-semibold">{activeTab}</h2>
         )}

@@ -9,6 +9,10 @@ export const skills = [
 
 export type Skill = (typeof skills)[number]
 
+export const orderStatuses = ['open', 'in_progress', 'done', 'paid'] as const
+
+export type OrderStatus = (typeof orderStatuses)[number]
+
 export interface Order {
   id: string
   title: string
@@ -17,6 +21,14 @@ export interface Order {
   skill: Skill
   description: string
   price: number
+}
+
+export interface MyOrder extends Order {
+  status: OrderStatus
+  createdBy: string | null
+  takenBy: string | null
+  responsePrice?: number
+  responseDays?: number
 }
 
 export interface OrderResponse {
