@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Первый заказ</title>
+<style>
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+:root{--bg:#F6F5F1;--surface:#FFFFFF;--text:#1D1C19;--muted:#6F6C64;--line:#E3E0D7;--accent:#1F6F5C;--on-accent:#FFFFFF;--accent-soft:#E4F0EB;--err:#A23B2C;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14140F;--surface:#1E1E18;--text:#F1EFE8;--muted:#A19E95;--line:#33322A;--accent:#7CC9B0;--on-accent:#10261F;--accent-soft:#1D3A31;--err:#EE8C82;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#14140F;--surface:#1E1E18;--text:#F1EFE8;--muted:#A19E95;--line:#33322A;--accent:#7CC9B0;--on-accent:#10261F;--accent-soft:#1D3A31;--err:#EE8C82;color-scheme:dark}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:env(safe-area-inset-top,0px) 0 0}
+.app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:20px 20px 12px}
+h1{font-size:22px;font-weight:600;margin:0;letter-spacing:-.01em}
+h2{font-size:16px;font-weight:600;margin:0}
+.sub{margin:2px 0 0;color:var(--muted);font-size:14px}
+main{flex:1;padding:4px 16px 24px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:12px}
+.row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.price{font-weight:600;color:var(--accent);white-space:nowrap}
+.meta{color:var(--muted);font-size:13px;margin:4px 0 0}
+.desc{margin:10px 0 14px;font-size:15px}
+.status{color:var(--accent);font-size:14px;font-weight:600;margin:10px 0 0}
+.big{font-size:22px;font-weight:600;margin:0}
+button{font:inherit;border-radius:10px;padding:10px 16px;min-height:44px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--text)}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+button.ghost{background:transparent}
+button:disabled{opacity:.5;cursor:default}
+button:active{transform:scale(.98)}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input,textarea,select{font:inherit;width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--text);min-height:44px}
+textarea{min-height:88px;resize:vertical}
+label{display:block;font-size:14px;color:var(--muted);margin-bottom:12px}
+label input,label textarea,label select{margin-top:6px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form{margin-top:12px}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.ai-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.ai-row button{font-size:14px;min-height:40px;padding:8px 12px}
+body[data-ai="0"] .ai{display:none}
+.hint{color:var(--accent);font-size:14px;margin:0 0 6px}
+.err{color:var(--err);font-size:14px;margin:0 0 8px;min-height:0}
+.filters{margin:4px 0 12px}
+.filters select{max-width:240px}
+.empty{text-align:center;padding:40px 12px;color:var(--muted)}
+.empty h2{color:var(--text);margin-bottom:6px}
+fieldset{border:1px solid var(--line);border-radius:10px;margin:0 0 12px;padding:12px}
+legend{font-size:14px;color:var(--muted);padding:0 4px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;margin:0;color:var(--text);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:14px;cursor:pointer}
+.chip input{width:auto;min-height:0;margin:0;accent-color:var(--accent)}
+.chip:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.stamp{width:76px;height:76px;border-radius:50%;border:2px solid var(--accent);color:var(--accent);display:flex;flex-direction:column;align-items:center;justify-content:center;transform:rotate(-10deg);box-shadow:inset 0 0 0 4px var(--surface),inset 0 0 0 5px var(--accent);flex-shrink:0;line-height:1.1}
+.stamp span{font-weight:700;font-size:13px;letter-spacing:.08em}
+.stamp small{font-size:11px}
+.stamp.locked{border-color:var(--line);color:var(--muted);box-shadow:inset 0 0 0 4px var(--surface),inset 0 0 0 5px var(--line)}
+.stamp.sm{width:54px;height:54px}
+.stamp.sm span{font-size:10px}
+.stamp.sm small{display:none}
+.stamp-row{display:flex;align-items:center;gap:16px}
+nav.tabs{position:sticky;bottom:0;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--surface);border-top:1px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px))}
+nav.tabs button{border:0;background:none;min-height:52px;font-size:12px;color:var(--muted);padding:4px}
+nav.tabs button[aria-current="page"]{color:var(--accent);font-weight:600}
+.toast{position:fixed;left:50%;bottom:96px;transform:translate(-50%,20px);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;max-width:90%;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body data-ai="0">
+<div class="app">
+  <header class="top">
+    <div>
+      <h1>Первый заказ</h1>
+      <p class="sub">Задачи от местного бизнеса для студентов</p>
+    </div>
+    <div id="headerStamp"></div>
+  </header>
+
+  <main>
+    <section data-screen="feed">
+      <div class="filters">
+        <select id="skillFilter" aria-label="Фильтр по навыку">
+          <option>Все</option><option>Сайты</option><option>Боты</option><option>Таблицы</option><option>Дизайн</option><option>Тексты</option><option>Другое</option>
+        </select>
+      </div>
+      <div id="feed"></div>
+    </section>
+
+    <section data-screen="new" hidden>
+      <form id="newForm" class="card" novalidate>
+        <h2>Новый заказ</h2>
+        <p class="meta">Опишите задачу понятно. Студенты увидят её в ленте.</p>
+        <div class="form">
+          <label>Название бизнеса<input name="business" maxlength="60" placeholder="Кафе, салон, магазин"></label>
+          <label>Задача<input name="ttl" maxlength="80" placeholder="Например: страница с меню и ценами"></label>
+          <label>Что нужно сделать<textarea name="desc" rows="4" maxlength="500" placeholder="Что есть, что нужно получить, к какому сроку"></textarea></label>
+          <div class="two">
+            <label>Бюджет, сом<input name="budget" type="number" min="100" max="500000" step="50" inputmode="numeric" placeholder="1500"></label>
+            <label>Срок, дней<input name="days" type="number" min="1" max="60" step="1" inputmode="numeric" placeholder="5"></label>
+          </div>
+          <label>Навык
+            <select name="skill">
+              <option>Сайты</option><option>Боты</option><option>Таблицы</option><option>Дизайн</option><option>Тексты</option><option>Другое</option>
+            </select>
+          </label>
+          <p class="err" id="newErr"></p>
+          <button class="primary" type="submit">Опубликовать заказ</button>
+        </div>
+      </form>
+    </section>
+
+    <section data-screen="mine" hidden>
+      <div id="mine"></div>
+    </section>
+
+    <section data-screen="profile" hidden>
+      <div id="profile"></div>
+    </section>
+  </main>
+
+  <nav class="tabs" aria-label="Разделы">
+    <button data-tab="feed" aria-current="page">Лента</button>
+    <button data-tab="new">Разместить</button>
+    <button data-tab="mine">Мои заказы</button>
+    <button data-tab="profile">Профиль</button>
+  </nav>
+</div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+const KEY = 'pervyy-zakaz-v1';
+const SKILLS = ['Сайты','Боты','Таблицы','Дизайн','Тексты','Другое'];
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = n => Number(n || 0).toLocaleString('ru-RU') + ' сом';
+const uid = () => Math.random().toString(36).slice(2, 10);
+
+const ui = { formFor: null, filter: 'Все', tab: 'feed', ai: null };
+
+function seed() {
+  const mk = (title, desc, budget, days, skill, business) => ({
+    id: uid(), title, desc, budget, days, skill, business,
+    status: 'open', taken: false, createdByMe: false, price: 0, takenDays: 0, created: Date.now()
+  });
+  return [
+    mk('Перенести меню в Google Docs', 'Текущее меню на бумаге, нужно аккуратно перенести с ценами. Фото не нужны.', 1500, 5, 'Тексты', 'Кафе «Тандыр»'),
+    mk('Страница для записи в салон', 'Одна страница: услуги, цены и кнопка записи. Должна открываться с телефона.', 4000, 7, 'Сайты', 'Салон «Айгерим»'),
+    mk('Таблица учёта товаров', 'Остатки и приход товаров в одной таблице, чтобы видеть, что заканчивается.', 2000, 4, 'Таблицы', 'Магазин канцелярии')
+  ];
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) {
+      const s = JSON.parse(raw);
+      if (s && s.profile) {
+        s.orders = [];
+        s.profile = s.profile || { name: '', contact: '', skills: [] };
+        return s;
+      }
+    }
+  } catch (e) {}
+  return { profile: { name: '', contact: '', skills: [] }, orders: [] };
+}
+
+let state = load();
+
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify({ profile: state.profile })); }
+  catch (e) { toast('Браузер не дал сохранить данные. Они останутся до перезагрузки'); }
+}
+
+let toastTimer;
+function toast(msg) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+const earnedStamp = () => state.orders.some(o => o.taken && o.status === 'paid');
+const stampHTML = (locked, small) =>
+  `<div class="stamp${locked ? ' locked' : ''}${small ? ' sm' : ''}" aria-hidden="true"><span>ПЕРВЫЙ</span><small>заказ</small></div>`;
+
+function emptyBlock(title, text) {
+  return `<div class="empty"><h2>${title}</h2><p>${text}</p></div>`;
+}
+
+/* ---------- Лента ---------- */
+
+function renderFeed() {
+  const list = state.orders.filter(o => o.status === 'open' && (ui.filter === 'Все' || o.skill === ui.filter));
+  $('#feed').innerHTML = list.length
+    ? list.map(orderCard).join('')
+    : emptyBlock('Пока нет заказов', 'Попробуйте другой навык или загляните позже. Новые задачи появляются, когда бизнес их публикует.');
+}
+
+function orderCard(o) {
+  let action;
+  if (o.createdByMe) action = `<p class="meta">Это ваш заказ. Студенты увидят его здесь.</p>`;
+  else if (ui.formFor === o.id) action = responseForm(o);
+  else action = `<button class="primary" data-act="open-form" data-id="${o.id}">Откликнуться</button>`;
+  return `<article class="card">
+    <div class="row"><h2>${esc(o.title)}</h2><span class="price">${fmt(o.budget)}</span></div>
+    <p class="meta">${esc(o.business)} · ${o.days} дн. · ${esc(o.skill)}</p>
+    <p class="desc">${esc(o.desc)}</p>
+    ${action}
+  </article>`;
+}
+
+function responseForm(o) {
+  return `<form class="form" data-form="${o.id}" novalidate>
+    <div class="two">
+      <label>Ваша цена, сом<input name="price" type="number" min="1" step="1" inputmode="numeric" value="${o.budget}"></label>
+      <label>Срок, дней<input name="days" type="number" min="1" max="60" step="1" inputmode="numeric" value="${o.days}"></label>
+    </div>
+    <label>Сообщение заказчику<textarea name="msg" rows="3" maxlength="400" placeholder="Коротко о себе и опыте"></textarea></label>
+    <div class="ai-row">
+      <button type="button" class="ghost ai" data-act="ai-text" data-id="${o.id}">Написать за меня</button>
+      <button type="button" class="ghost ai" data-act="ai-price" data-id="${o.id}">Подсказать цену</button>
+    </div>
+    <p class="hint" id="hint-${o.id}"></p>
+    <p class="err" id="err-${o.id}"></p>
+    <div class="btns">
+      <button type="submit" class="primary">Отправить отклик</button>
+      <button type="button" class="ghost" data-act="close-form">Отмена</button>
+    </div>
+  </form>`;
+}
+
+function takeOrder(id, f) {
+  const o = state.orders.find(x => x.id === id);
+  const err = $('#err-' + id);
+  if (!o) return;
+  err.textContent = '';
+  if (!state.profile.name) { err.textContent = 'Сначала укажите имя в разделе «Профиль»'; return; }
+  const price = parseInt(f.price.value, 10);
+  const days = parseInt(f.days.value, 10);
+  if (!Number.isFinite(price) || price < 1 || price > 500000) { err.textContent = 'Цена от 1 до 500 000 сом'; return; }
+  if (!Number.isFinite(days) || days < 1 || days > 60) { err.textContent = 'Срок от 1 до 60 дней'; return; }
+  Object.assign(o, { status: 'in_progress', taken: true, takenBy: ME, price, takenDays: days, message: f.msg.value.trim(), takenAt: Date.now() });
+  ui.formFor = null;
+  persist(o);
+  renderAll();
+  toast('Отклик отправлен. Заказ в разделе «Мои заказы»');
+}
+
+/* ---------- Публикация ---------- */
+
+function createOrder(f) {
+  const err = $('#newErr');
+  err.textContent = '';
+  const business = f.business.value.trim();
+  const ttl = f.ttl.value.trim();
+  const desc = f.desc.value.trim();
+  const budget = parseInt(f.budget.value, 10);
+  const days = parseInt(f.days.value, 10);
+  const skill = f.skill.value;
+  if (business.length < 2) { err.textContent = 'Укажите название бизнеса'; return; }
+  if (ttl.length < 5) { err.textContent = 'Название задачи от 5 символов'; return; }
+  if (!Number.isFinite(budget) || budget < 100 || budget > 500000) { err.textContent = 'Бюджет от 100 до 500 000 сом. Введите число'; return; }
+  if (!Number.isFinite(days) || days < 1 || days > 60) { err.textContent = 'Срок от 1 до 60 дней'; return; }
+  const o = {
+    id: uid(), title: ttl, desc, budget, days, skill, business,
+    status: 'open', taken: false, takenBy: null, createdBy: ME, createdByMe: true,
+    price: 0, takenDays: 0, created: Date.now()
+  };
+  state.orders.unshift(o);
+  persist(o);
+  f.reset();
+  switchTab('feed');
+  renderAll();
+  toast('Заказ опубликован');
+}
+
+/* ---------- Мои заказы ---------- */
+
+const STATUS = { open: 'Ищем исполнителя', in_progress: 'В работе', done: 'Сдано, ждём оплату', paid: 'Оплачено' };
+
+function renderMine() {
+  const list = state.orders.filter(o => o.taken || o.createdByMe);
+  $('#mine').innerHTML = list.length
+    ? list.map(mineCard).join('')
+    : emptyBlock('Здесь пока пусто', 'Откликнитесь на заказ в ленте, и он появится здесь. Свою задачу можно разместить во вкладке «Разместить».');
+}
+
+function mineCard(o) {
+  let action = '';
+  let statusLine = STATUS[o.status];
+  if (o.taken && o.status === 'in_progress') action = `<button class="primary" data-act="finish" data-id="${o.id}">Отметить сданным</button>`;
+  if (o.createdByMe && o.status === 'done') action = `<button class="primary" data-act="paid" data-id="${o.id}">Оплату получил</button>`;
+  if (o.createdByMe && o.status === 'in_progress') statusLine = 'В работе у студента';
+  const stamp = o.taken && o.status === 'paid' ? stampHTML(false, true) : '';
+  return `<article class="card">
+    <div class="row"><h2>${esc(o.title)}</h2>${stamp || `<span class="price">${fmt(o.taken ? o.price : o.budget)}</span>`}</div>
+    <p class="meta">${esc(o.business)} · ${o.taken ? fmt(o.price) + ' · ' + o.takenDays + ' дн.' : fmt(o.budget)}</p>
+    <p class="status">${statusLine}</p>
+    ${action ? `<div style="margin-top:12px">${action}</div>` : ''}
+  </article>`;
+}
+
+function setStatus(id, status, msg) {
+  const o = state.orders.find(x => x.id === id);
+  if (!o) return;
+  o.status = status;
+  persist(o);
+  renderAll();
+  toast(msg);
+}
+
+/* ---------- Профиль ---------- */
+
+function renderProfile() {
+  const p = state.profile;
+  const paid = state.orders.filter(o => o.taken && o.status === 'paid');
+  const total = paid.reduce((sum, o) => sum + (o.price || 0), 0);
+  const earned = paid.length > 0;
+  $('#profile').innerHTML = `
+    <form id="profileForm" class="card" novalidate>
+      <label>Имя<input name="pname" maxlength="40" value="${esc(p.name)}" placeholder="Как вас называть"></label>
+      <label>Контакт для заказчика<input name="pcontact" maxlength="80" value="${esc(p.contact)}" placeholder="Telegram или телефон"></label>
+      <fieldset>
+        <legend>Навыки</legend>
+        <div class="chips">
+          ${SKILLS.map(s => `<label class="chip"><input type="checkbox" name="skills" value="${s}" ${p.skills.includes(s) ? 'checked' : ''}><span>${s}</span></label>`).join('')}
+        </div>
+      </fieldset>
+      <p class="err" id="profileErr"></p>
+      <button class="primary" type="submit">Сохранить</button>
+    </form>
+    <div class="card">
+      <div class="stamp-row">
+        ${stampHTML(!earned, false)}
+        <div>
+          <p class="big">${fmt(total)}</p>
+          <p class="meta">${paid.length} оплаченных заказов</p>
+        </div>
+      </div>
+      <p class="meta" style="margin-top:14px">${earned
+        ? 'Печать «Первый заказ» получена. Она будет стоять на всех ваших работах.'
+        : 'Печать появится после первого оплаченного заказа.'}</p>
+    </div>`;
+}
+
+function saveProfile(f) {
+  const err = $('#profileErr');
+  err.textContent = '';
+  const name = f.pname.value.trim();
+  const contact = f.pcontact.value.trim();
+  const skills = [...f.querySelectorAll('input[name="skills"]:checked')].map(i => i.value);
+  if (name.length < 2) { err.textContent = 'Имя должно быть от 2 символов'; return; }
+  state.profile = { name, contact, skills };
+  save();
+  renderAll();
+  toast('Профиль сохранён');
+}
+
+/* ---------- Общие данные (db) ---------- */
+
+let DB = null;
+let ME = null;
+
+function toDoc(o) {
+  return {
+    title: o.title, desc: o.desc, budget: o.budget, days: o.days, skill: o.skill, business: o.business,
+    status: o.status, price: o.price || 0, takenDays: o.takenDays || 0, message: o.message || '',
+    takenAt: o.takenAt || null, created: o.created || Date.now(),
+    takenBy: o.takenBy || null, createdBy: o.createdBy || null
+  };
+}
+
+function persist(o) {
+  if (!DB) { toast('Общие данные недоступны. Изменение сохранено только на этом устройстве'); return; }
+  DB.collection('orders').doc(o.id).set(toDoc(o)).catch(() => toast('Не удалось сохранить. Попробуйте ещё раз'));
+}
+
+function fromSnap(d) {
+  const x = d.data() || {};
+  return Object.assign({ id: d.id }, x, {
+    taken: !!x.takenBy && x.takenBy === ME,
+    createdByMe: !!x.createdBy && x.createdBy === ME,
+    price: x.price || 0,
+    takenDays: x.takenDays || 0
+  });
+}
+
+async function initDB() {
+  try {
+    if (window.claude && typeof window.claude.use === 'function') {
+      DB = await window.claude.use('db');
+      const user = await window.claude.use('user');
+      ME = user ? await user.id() : null;
+    }
+  } catch (e) { DB = null; }
+  if (!DB) {
+    state.orders = seed();
+    renderAll();
+    toast('Общие данные недоступны. Заказы видны только на этом устройстве');
+    return;
+  }
+  DB.collection('orders').onSnapshot(snap => {
+    if (snap.empty) {
+      if (ME) seed().forEach(o => DB.collection('orders').doc(o.id).set(toDoc(o)).catch(() => {}));
+      return;
+    }
+    state.orders = snap.docs.filter(d => d.exists).map(fromSnap).sort((a, b) => (b.created || 0) - (a.created || 0));
+    renderAll();
+  }, () => toast('Связь с общими данными прервалась. Обновите страницу'));
+}
+
+/* ---------- AI через sample ---------- */
+
+async function aiWriteMessage(id, btn) {
+  if (!ui.ai) return;
+  const o = state.orders.find(x => x.id === id);
+  const f = document.querySelector(`[data-form="${id}"]`);
+  const err = $('#err-' + id);
+  err.textContent = '';
+  const old = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Пишу...';
+  const prompt = `Ты помогаешь студенту-программисту из Бишкека написать короткий отклик на заказ.
+Имя студента: ${state.profile.name || 'не указано'}. Навыки: ${state.profile.skills.join(', ') || 'не указаны'}.
+Заказ: ${o.title}. Описание: ${o.desc}. Бюджет: ${o.budget} сом.
+Напиши 2-3 предложения на русском, дружелюбно и по делу, от первого лица. Только текст отклика, без заголовков и кавычек.`;
+  try {
+    const r = await ui.ai(prompt, { modelTier: 'quick', cache: false, onText: ({ text }) => { f.msg.value = text; } });
+    f.msg.value = (r.text || '').trim();
+  } catch (e) {
+    err.textContent = 'Не получилось написать текст. Напишите сами или попробуйте ещё раз';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = old;
+  }
+}
+
+async function aiSuggestPrice(id, btn) {
+  if (!ui.ai) return;
+  const o = state.orders.find(x => x.id === id);
+  const hint = $('#hint-' + id);
+  const err = $('#err-' + id);
+  err.textContent = '';
+  hint.textContent = 'Считаю ориентир...';
+  btn.disabled = true;
+  try {
+    const r = await ui.ai(`Студент-новичок из Бишкека берётся за заказ: "${o.title}". Описание: ${o.desc}. Заказчик предлагает ${o.budget} сом и срок ${o.days} дн. Подскажи разумную цену в сомах для начинающего. Ответь одной строкой, не больше 20 слов: сумма и короткое объяснение.`, { modelTier: 'quick', cache: false });
+    hint.textContent = (r.text || '').trim();
+  } catch (e) {
+    hint.textContent = '';
+    err.textContent = 'Подсказка сейчас недоступна. Цену можно указать самим';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+/* ---------- Навигация и события ---------- */
+
+function switchTab(tab) {
+  ui.tab = tab;
+  document.querySelectorAll('[data-screen]').forEach(s => { s.hidden = s.dataset.screen !== tab; });
+  document.querySelectorAll('nav [data-tab]').forEach(b => b.setAttribute('aria-current', b.dataset.tab === tab ? 'page' : 'false'));
+  if (tab === 'profile') renderProfile();
+  if (tab === 'mine') renderMine();
+  window.scrollTo(0, 0);
+}
+
+function renderHeader() {
+  $('#headerStamp').innerHTML = earnedStamp() ? stampHTML(false, true) : '';
+}
+
+function renderAll() {
+  renderFeed();
+  renderMine();
+  renderProfile();
+  renderHeader();
+}
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act],[data-tab]');
+  if (!b) return;
+  if (b.dataset.tab) { switchTab(b.dataset.tab); return; }
+  const id = b.dataset.id;
+  switch (b.dataset.act) {
+    case 'open-form': ui.formFor = id; renderFeed(); break;
+    case 'close-form': ui.formFor = null; renderFeed(); break;
+    case 'ai-text': aiWriteMessage(id, b); break;
+    case 'ai-price': aiSuggestPrice(id, b); break;
+    case 'finish': setStatus(id, 'done', 'Работа отмечена сданной'); break;
+    case 'paid': setStatus(id, 'paid', 'Оплата отмечена. Печать добавлена в профиль'); break;
+  }
+});
+
+document.addEventListener('submit', e => {
+  e.preventDefault();
+  const f = e.target;
+  if (f.dataset.form) takeOrder(f.dataset.form, f);
+  else if (f.id === 'newForm') createOrder(f);
+  else if (f.id === 'profileForm') saveProfile(f);
+});
+
+document.addEventListener('change', e => {
+  if (e.target.id === 'skillFilter') { ui.filter = e.target.value; renderFeed(); }
+});
+
+async function initAI() {
+  try {
+    if (window.claude && typeof window.claude.use === 'function') {
+      const s = await window.claude.use('sample');
+      if (s) { ui.ai = s; document.body.dataset.ai = '1'; }
+    }
+  } catch (e) {}
+}
+
+renderAll();
+switchTab('feed');
+initAI();
+initDB();
+</script>
+</body>
+</html>
