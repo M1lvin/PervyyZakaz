@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import Feed from './components/Feed'
 import MyOrders from './components/MyOrders'
 import PlaceOrder from './components/PlaceOrder'
+import Profile, { FirstOrderStamp, loadProfile, type UserProfile } from './components/Profile'
 import {
   orderStatuses,
   orders as initialOrders,
@@ -69,6 +70,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('Лента')
   const [userId] = useState(loadUserId)
   const [orders, setOrders] = useState<MyOrder[]>(loadOrders)
+  const [profile, setProfile] = useState<UserProfile>(loadProfile)
   const [notice, setNotice] = useState<string | null>(null)
 
   useEffect(() => {
@@ -117,10 +119,17 @@ export default function App() {
   return (
     <div className="mx-auto flex min-h-dvh max-w-[480px] flex-col bg-[#f6f5f1] text-[#1d1c19]">
       <header className="px-5 pb-3 pt-5">
-        <h1 className="text-[22px] font-semibold tracking-tight">Первый заказ</h1>
-        <p className="mt-0.5 text-sm text-[#6f6c64]">
-          Задачи от местного бизнеса для студентов
-        </p>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h1 className="text-[22px] font-semibold tracking-tight">Первый заказ</h1>
+            <p className="mt-0.5 text-sm text-[#6f6c64]">
+              Задачи от местного бизнеса для студентов
+            </p>
+          </div>
+          {orders.some((order) => order.takenBy === userId && order.status === 'paid') && (
+            <FirstOrderStamp earned small />
+          )}
+        </div>
       </header>
 
       <main className="flex-1 px-4 pb-28 pt-1">
@@ -130,6 +139,13 @@ export default function App() {
           <PlaceOrder onPublish={publishOrder} />
         ) : activeTab === 'Мои заказы' ? (
           <MyOrders orders={orders} userId={userId} onStatusChange={changeOrderStatus} />
+        ) : activeTab === 'Профиль' ? (
+          <Profile
+            profile={profile}
+            orders={orders}
+            userId={userId}
+            onSave={setProfile}
+          />
         ) : (
           <h2 className="text-base font-semibold">{activeTab}</h2>
         )}
