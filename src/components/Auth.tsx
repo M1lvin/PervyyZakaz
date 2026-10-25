@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type FormEvent } from 'react'
 import type { AuthError, SupabaseClient } from '@supabase/supabase-js'
 
 interface AuthProps {
@@ -17,10 +17,10 @@ function translateAuthError(error: AuthError): string {
     return 'Подтвердите email по ссылке из письма'
   }
   if (message.includes('user already registered')) {
-    return 'Этот email уже зарегистрирован. Попробуйте войти'
+    return 'Такой аккаунт уже есть, войдите'
   }
   if (message.includes('password should be at least')) {
-    return 'Пароль слишком короткий'
+    return 'Пароль должен быть не короче 6 символов'
   }
   if (message.includes('email address is invalid')) {
     return 'Проверьте правильность email'
@@ -41,9 +41,11 @@ export default function Auth({ client }: AuthProps) {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
+  const requestInProgress = useRef(false)
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (requestInProgress.current) return
     setError('')
     setMessage('')
 
@@ -53,10 +55,11 @@ export default function Auth({ client }: AuthProps) {
       return
     }
     if (mode === 'signup' && password.length < 6) {
-      setError('Пароль должен содержать не менее 6 символов')
+      setError('Пароль должен быть не короче 6 символов')
       return
     }
 
+    requestInProgress.current = true
     setLoading(true)
     try {
       if (mode === 'signup') {
@@ -79,6 +82,7 @@ export default function Auth({ client }: AuthProps) {
     } catch {
       setError('Не удалось связаться с сервером. Проверьте подключение к интернету')
     } finally {
+      requestInProgress.current = false
       setLoading(false)
     }
   }
@@ -104,6 +108,7 @@ export default function Auth({ client }: AuthProps) {
               id="auth-email"
               type="email"
               autoComplete="email"
+              inputMode="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               className="mt-1.5 min-h-11 w-full rounded-[10px] border border-[#e3e0d7] bg-white px-3 py-2.5 text-[15px] text-[#1d1c19]"
@@ -137,7 +142,7 @@ export default function Auth({ client }: AuthProps) {
             disabled={loading}
             className="button-primary min-h-11 w-full rounded-[10px] border border-[#1f6f5c] bg-[#1f6f5c] px-4 py-2.5 text-white disabled:opacity-60"
           >
-            {loading ? 'Подождите…' : mode === 'signin' ? 'Войти' : 'Зарегистрироваться'}
+            {loading ? 'Подождите...' : mode === 'signin' ? 'Войти' : 'Зарегистрироваться'}
           </button>
         </form>
 
