@@ -1,7 +1,5 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { skills, type MyOrder, type Skill } from '../data/orders'
-
-const profileStorageKey = 'pervyy-zakaz-profile-v1'
 
 export interface UserProfile {
   name: string
@@ -13,7 +11,8 @@ interface ProfileProps {
   profile: UserProfile
   orders: MyOrder[]
   userId: string
-  onSave: (profile: UserProfile) => void
+  onSave: (profile: UserProfile) => Promise<boolean>
+  onSignOut: () => void
 }
 
 export function FirstOrderStamp({ earned, small = false }: { earned: boolean; small?: boolean }) {
@@ -36,44 +35,30 @@ export function FirstOrderStamp({ earned, small = false }: { earned: boolean; sm
   )
 }
 
-export function loadProfile(): UserProfile {
-  const stored = localStorage.getItem(profileStorageKey)
-  if (stored === null) return { name: '', contact: '', skills: [] }
-
-  const parsed: unknown = JSON.parse(stored)
-  if (
-    typeof parsed !== 'object' ||
-    parsed === null ||
-    !('name' in parsed) ||
-    typeof parsed.name !== 'string' ||
-    !('contact' in parsed) ||
-    typeof parsed.contact !== 'string' ||
-    !('skills' in parsed) ||
-    !Array.isArray(parsed.skills) ||
-    !parsed.skills.every((skill) => skills.some((option) => option === skill))
-  ) {
-    throw new Error('Сохранённый профиль имеет неверный формат.')
-  }
-  return parsed as UserProfile
-}
-
-export default function Profile({ profile, orders, userId, onSave }: ProfileProps) {
+export default function Profile({ profile, orders, userId, onSave, onSignOut }: ProfileProps) {
   const [name, setName] = useState(profile.name)
   const [contact, setContact] = useState(profile.contact)
   const [selectedSkills, setSelectedSkills] = useState<Skill[]>(profile.skills)
   const [nameError, setNameError] = useState('')
   const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    setName(profile.name)
+    setContact(profile.contact)
+    setSelectedSkills(profile.skills)
+  }, [profile])
 
   const paidOrders = orders.filter(
     (order) => order.takenBy === userId && order.status === 'paid',
   )
   const totalEarned = paidOrders.reduce(
-    (total, order) => total + (order.responsePrice ?? order.price),
+    (total, order) => total + (order.responsePrice ?? 0),
     0,
   )
   const earned = paidOrders.length > 0
 
-  function submitProfile(event: FormEvent<HTMLFormElement>) {
+  async function submitProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const trimmedName = name.trim()
     if (trimmedName.length < 2) {
@@ -83,10 +68,13 @@ export default function Profile({ profile, orders, userId, onSave }: ProfileProp
     }
 
     const nextProfile = { name: trimmedName, contact: contact.trim(), skills: selectedSkills }
-    localStorage.setItem(profileStorageKey, JSON.stringify(nextProfile))
-    onSave(nextProfile)
     setNameError('')
-    setSaved(true)
+    setSaving(true)
+    try {
+      setSaved(await onSave(nextProfile))
+    } finally {
+      setSaving(false)
+    }
   }
 
   function toggleSkill(skill: Skill) {
@@ -176,6 +164,7 @@ export default function Profile({ profile, orders, userId, onSave }: ProfileProp
 
         <button
           type="submit"
+          disabled={saving}
           className="min-h-11 rounded-[10px] border border-[#1f6f5c] bg-[#1f6f5c] px-4 py-2.5 text-white"
           style={{ backgroundColor: '#1F6F5C', color: '#FFFFFF' }}
         >
@@ -206,6 +195,13 @@ export default function Profile({ profile, orders, userId, onSave }: ProfileProp
             : 'Печать появится после первого оплаченного заказа'}
         </p>
       </div>
+      <button
+        type="button"
+        onClick={onSignOut}
+        className="mt-3 min-h-11 w-full rounded-[10px] border border-[#e3e0d7] bg-white px-4 py-2.5 text-sm text-[#1d1c19]"
+      >
+        Выйти
+      </button>
     </section>
   )
 }

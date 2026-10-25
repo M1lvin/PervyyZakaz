@@ -4,7 +4,7 @@ import Auth from './components/Auth'
 import Feed from './components/Feed'
 import MyOrders from './components/MyOrders'
 import PlaceOrder from './components/PlaceOrder'
-import Profile, { FirstOrderStamp, loadProfile, type UserProfile } from './components/Profile'
+import Profile, { FirstOrderStamp, type UserProfile } from './components/Profile'
 import { supabase } from './lib/supabase'
 import type { MyOrder, Order, OrderStatus } from './data/orders'
 import {
@@ -14,15 +14,24 @@ import {
   takeOrder as submitOrderResponse,
   updateOrderStatus,
 } from './lib/orders'
+import {
+  loadProfile as fetchProfile,
+  profileErrorMessage,
+  saveProfile as upsertProfile,
+} from './lib/profiles'
 
 const tabs = ['Лента', 'Разместить', 'Мои заказы', 'Профиль'] as const
 
 type Tab = (typeof tabs)[number]
 
+const emptyProfile: UserProfile = { name: '', contact: '', skills: [] }
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('Лента')
   const [orders, setOrders] = useState<MyOrder[]>([])
-  const [profile, setProfile] = useState<UserProfile>(loadProfile)
+  const [profile, setProfile] = useState<UserProfile>(emptyProfile)
+  const [profileLoading, setProfileLoading] = useState(true)
+  const [profileError, setProfileError] = useState('')
   const [notice, setNotice] = useState<string | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [authLoading, setAuthLoading] = useState(true)
@@ -95,6 +104,35 @@ export default function App() {
     }
   }, [userId, ordersReload, session])
 
+  useEffect(() => {
+    if (!userId || !supabase) {
+      setProfile(emptyProfile)
+      setProfileLoading(false)
+      setProfileError('')
+      return
+    }
+
+    let active = true
+    const client = supabase
+    setProfile(emptyProfile)
+    setProfileLoading(true)
+    setProfileError('')
+    fetchProfile(client, userId)
+      .then((loadedProfile) => {
+        if (active) setProfile(loadedProfile)
+      })
+      .catch((error: unknown) => {
+        if (active) setProfileError(profileErrorMessage(error))
+      })
+      .finally(() => {
+        if (active) setProfileLoading(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [userId])
+
   async function publishOrder(order: Order): Promise<boolean> {
     if (!supabase || !userId) {
       setOrdersError('Войдите в аккаунт, чтобы опубликовать заказ.')
@@ -145,6 +183,23 @@ export default function App() {
       setOrders((current) => current.map((order) => order.id === orderId ? updatedOrder : order))
     } catch (error) {
       setOrdersError(orderErrorMessage(error))
+    }
+  }
+
+  async function saveUserProfile(nextProfile: UserProfile): Promise<boolean> {
+    if (!supabase || !userId) {
+      setProfileError('Войдите в аккаунт, чтобы сохранить профиль.')
+      return false
+    }
+
+    setProfileError('')
+    try {
+      await upsertProfile(supabase, userId, nextProfile)
+      setProfile(nextProfile)
+      return true
+    } catch (error) {
+      setProfileError(profileErrorMessage(error))
+      return false
     }
   }
 
@@ -203,13 +258,6 @@ export default function App() {
             {orders.some((order) => order.takenBy === userId && order.status === 'paid') && (
               <FirstOrderStamp earned small />
             )}
-            <button
-              type="button"
-              onClick={signOut}
-              className="min-h-11 rounded-[10px] border border-[#e3e0d7] bg-white px-3 py-2 text-sm text-[#1d1c19]"
-            >
-              Выйти
-            </button>
           </div>
         </div>
       </header>
@@ -232,6 +280,11 @@ export default function App() {
             </button>
           </div>
         )}
+        {activeTab === 'Профиль' && profileError && (
+          <p role="alert" className="mb-3 rounded-[10px] bg-[#f8e9e6] px-4 py-3 text-sm text-[#a23b2c]">
+            {profileError}
+          </p>
+        )}
         {ordersLoading ? (
           <p role="status" className="py-8 text-center text-sm text-[#6f6c64]">
             Загружаем заказы…
@@ -242,12 +295,17 @@ export default function App() {
           <PlaceOrder onPublish={publishOrder} />
         ) : activeTab === 'Мои заказы' ? (
           <MyOrders orders={orders} userId={userId} onStatusChange={changeOrderStatus} />
+        ) : activeTab === 'Профиль' && profileLoading ? (
+          <p role="status" className="py-8 text-center text-sm text-[#6f6c64]">
+            Загружаем профиль…
+          </p>
         ) : activeTab === 'Профиль' ? (
           <Profile
             profile={profile}
             orders={orders}
             userId={userId}
-            onSave={setProfile}
+            onSave={saveUserProfile}
+            onSignOut={signOut}
           />
         ) : (
           <h2 className="text-base font-semibold">{activeTab}</h2>
