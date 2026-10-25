@@ -41,11 +41,12 @@ export default function Auth({ client }: AuthProps) {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
   const requestInProgress = useRef(false)
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (requestInProgress.current) return
+    if (requestInProgress.current || googleLoading) return
     setError('')
     setMessage('')
 
@@ -84,6 +85,24 @@ export default function Auth({ client }: AuthProps) {
     } finally {
       requestInProgress.current = false
       setLoading(false)
+    }
+  }
+
+  async function signInWithGoogle() {
+    if (requestInProgress.current || googleLoading) return
+    setError('')
+    setMessage('')
+    setGoogleLoading(true)
+    try {
+      const { error: authError } = await client.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin },
+      })
+      if (authError) setError(translateAuthError(authError))
+    } catch {
+      setError('Не удалось связаться с сервером. Проверьте подключение к интернету')
+    } finally {
+      setGoogleLoading(false)
     }
   }
 
@@ -145,6 +164,26 @@ export default function Auth({ client }: AuthProps) {
             {loading ? 'Подождите...' : mode === 'signin' ? 'Войти' : 'Зарегистрироваться'}
           </button>
         </form>
+
+        <div className="my-4 flex items-center gap-3 text-sm text-[#6f6c64]">
+          <span className="h-px flex-1 bg-[#e3e0d7]" />
+          <span>или</span>
+          <span className="h-px flex-1 bg-[#e3e0d7]" />
+        </div>
+        <button
+          type="button"
+          disabled={loading || googleLoading}
+          onClick={signInWithGoogle}
+          className="button-secondary flex min-h-11 w-full items-center justify-center gap-2 rounded-[10px] border border-[#e3e0d7] bg-white px-4 py-2.5 text-[#1d1c19] disabled:opacity-60"
+        >
+          <svg aria-hidden="true" viewBox="0 0 48 48" className="h-5 w-5">
+            <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3A12 12 0 1 1 32 15.1l5.7-5.7A20 20 0 1 0 44 24c0-1.2-.1-2.4-.4-3.5Z" />
+            <path fill="#FF3D00" d="m6.3 14.7 6.6 4.8A12 12 0 0 1 32 15.1l5.7-5.7A20 20 0 0 0 6.3 14.7Z" />
+            <path fill="#4CAF50" d="M24 44a20 20 0 0 0 13.4-5.2l-6.2-5.2A12 12 0 0 1 12.8 28l-6.5 5A20 20 0 0 0 24 44Z" />
+            <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3a12 12 0 0 1-4.1 5.6l6.2 5.2A20 20 0 0 0 44 24c0-1.2-.1-2.4-.4-3.5Z" />
+          </svg>
+          {googleLoading ? 'Подождите...' : 'Войти через Google'}
+        </button>
 
         <p className="mt-4 text-center text-sm text-[#6f6c64]">
           {mode === 'signin' ? 'Нет аккаунта?' : 'Уже есть аккаунт?'}{' '}

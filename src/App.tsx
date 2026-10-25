@@ -48,16 +48,18 @@ export default function App() {
     }
 
     let active = true
+    let authStateChanged = false
     const client = supabase
     const { data: { subscription } } = client.auth.onAuthStateChange((_event, nextSession) => {
       if (!active) return
+      authStateChanged = true
       setSession(nextSession)
       setAuthError('')
       setAuthLoading(false)
     })
 
     client.auth.getSession().then(({ data, error }) => {
-      if (!active) return
+      if (!active || authStateChanged) return
       if (error) {
         setAuthError('Не удалось проверить вход. Обновите страницу и попробуйте ещё раз')
       } else {
@@ -65,7 +67,7 @@ export default function App() {
       }
       setAuthLoading(false)
     }).catch(() => {
-      if (!active) return
+      if (!active || authStateChanged) return
       setAuthError('Не удалось связаться с сервером. Проверьте подключение к интернету')
       setAuthLoading(false)
     })
@@ -226,7 +228,7 @@ export default function App() {
   if (authLoading) {
     return (
       <div className="mx-auto flex min-h-dvh max-w-[480px] items-center justify-center text-sm text-[#6f6c64]">
-        Проверяем вход…
+        Загрузка...
       </div>
     )
   }
