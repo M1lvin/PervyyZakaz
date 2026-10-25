@@ -34,6 +34,8 @@ export default function App() {
   const [profileError, setProfileError] = useState('')
   const [notice, setNotice] = useState<string | null>(null)
   const [session, setSession] = useState<Session | null>(null)
+  const [passwordRecovery, setPasswordRecovery] = useState(false)
+  const [passwordChangedNotice, setPasswordChangedNotice] = useState(false)
   const [authLoading, setAuthLoading] = useState(true)
   const [authError, setAuthError] = useState('')
   const [ordersLoading, setOrdersLoading] = useState(true)
@@ -50,10 +52,16 @@ export default function App() {
     let active = true
     let authStateChanged = false
     const client = supabase
-    const { data: { subscription } } = client.auth.onAuthStateChange((_event, nextSession) => {
+    const { data: { subscription } } = client.auth.onAuthStateChange((event, nextSession) => {
       if (!active) return
       authStateChanged = true
       setSession(nextSession)
+      if (event === 'PASSWORD_RECOVERY') {
+        setPasswordRecovery(true)
+      } else if (event === 'SIGNED_OUT') {
+        setPasswordRecovery(false)
+        setPasswordChangedNotice(false)
+      }
       setAuthError('')
       setAuthLoading(false)
     })
@@ -233,7 +241,7 @@ export default function App() {
     )
   }
 
-  if (!session) {
+  if (!session || passwordRecovery) {
     return (
       <div className="mx-auto flex min-h-dvh max-w-[480px] flex-col bg-[#f6f5f1] text-[#1d1c19]">
         {authError && (
@@ -241,7 +249,14 @@ export default function App() {
             {authError}
           </p>
         )}
-        <Auth client={supabase} />
+        <Auth
+          client={supabase}
+          recoveryMode={passwordRecovery}
+          onPasswordChanged={() => {
+            setPasswordRecovery(false)
+            setPasswordChangedNotice(true)
+          }}
+        />
       </div>
     )
   }
@@ -268,6 +283,11 @@ export default function App() {
         {authError && (
           <p role="alert" className="mb-3 text-sm text-[#a23b2c]">
             {authError}
+          </p>
+        )}
+        {passwordChangedNotice && (
+          <p role="status" className="mb-3 text-sm text-[#1f6f5c]">
+            Пароль изменён
           </p>
         )}
         {ordersError && (

@@ -3,6 +3,8 @@ import type { AuthError, SupabaseClient } from '@supabase/supabase-js'
 
 interface AuthProps {
   client: SupabaseClient
+  recoveryMode?: boolean
+  onPasswordChanged?: () => void
 }
 
 type AuthMode = 'signin' | 'signup'
@@ -34,15 +36,22 @@ function translateAuthError(error: AuthError): string {
   return 'Не удалось выполнить запрос. Проверьте данные и попробуйте ещё раз'
 }
 
-export default function Auth({ client }: AuthProps) {
+export default function Auth({
+  client,
+  recoveryMode = false,
+  onPasswordChanged,
+}: AuthProps) {
   const [mode, setMode] = useState<AuthMode>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
+  const [emailError, setEmailError] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const requestInProgress = useRef(false)
+  const recoveryRequestInProgress = useRef(false)
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -106,10 +115,132 @@ export default function Auth({ client }: AuthProps) {
     }
   }
 
+  async function sendPasswordReset() {
+    if (requestInProgress.current || googleLoading) return
+    setError('')
+    setMessage('')
+    setEmailError('')
+
+    const normalizedEmail = email.trim()
+    if (!normalizedEmail) {
+      setEmailError('Введите email')
+      return
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      setEmailError('Проверьте правильность email')
+      return
+    }
+
+    requestInProgress.current = true
+    setLoading(true)
+    try {
+      const { error: authError } = await client.auth.resetPasswordForEmail(normalizedEmail, {
+        redirectTo: window.location.origin,
+      })
+      if (authError) {
+        setError(translateAuthError(authError))
+      } else {
+        setMessage('Письмо для сброса отправлено. Проверьте почту, включая папку «Спам».')
+      }
+    } catch {
+      setError('Не удалось связаться с сервером. Проверьте подключение к интернету')
+    } finally {
+      requestInProgress.current = false
+      setLoading(false)
+    }
+  }
+
+  async function submitNewPassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (recoveryRequestInProgress.current) return
+    setError('')
+    setMessage('')
+    if (password.length < 6) {
+      setError('Пароль должен быть не короче 6 символов')
+      return
+    }
+
+    recoveryRequestInProgress.current = true
+    setLoading(true)
+    try {
+      const { error: authError } = await client.auth.updateUser({ password })
+      if (authError) {
+        setError(translateAuthError(authError))
+      } else {
+        onPasswordChanged?.()
+      }
+    } catch {
+      setError('Не удалось связаться с сервером. Проверьте подключение к интернету')
+    } finally {
+      recoveryRequestInProgress.current = false
+      setLoading(false)
+    }
+  }
+
   function changeMode(nextMode: AuthMode) {
     setMode(nextMode)
     setError('')
+    setEmailError('')
     setMessage('')
+  }
+
+  if (recoveryMode) {
+    return (
+      <main className="flex flex-1 items-center justify-center px-4 py-8">
+        <section className="w-full max-w-[420px] rounded-xl border border-[#e3e0d7] bg-white p-5">
+          <h1 className="text-[22px] font-semibold tracking-tight">Новый пароль</h1>
+          <p className="mt-1 text-sm text-[#6f6c64]">Первый заказ</p>
+
+          <form className="mt-5" noValidate onSubmit={submitNewPassword}>
+            <label htmlFor="auth-password" className="mb-3 block text-sm text-[#6f6c64]">
+              Пароль
+              <span className="relative mt-1.5 block">
+                <input
+                  id="auth-password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  className="min-h-11 w-full rounded-[10px] border border-[#e3e0d7] bg-white px-3 py-2.5 pr-12 text-[15px] text-[#1d1c19]"
+                />
+                <button
+                  type="button"
+                  aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+                  onClick={() => setShowPassword((visible) => !visible)}
+                  className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-[#6f6c64]"
+                >
+                  <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    {showPassword ? (
+                      <>
+                        <path d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8" />
+                        <path d="M9.9 5.2A10.8 10.8 0 0 1 12 5c5 0 8.5 4.5 9.5 7-.4 1-1.3 2.2-2.5 3.3M6.2 6.2C3.9 7.7 2.7 9.7 2.5 12c.5 1.2 1.6 2.8 3.5 4.1A10.5 10.5 0 0 0 12 18c.8 0 1.5-.1 2.2-.3" />
+                      </>
+                    ) : (
+                      <>
+                        <path d="M2.5 12S6 5 12 5s9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7Z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </>
+                    )}
+                  </svg>
+                </button>
+              </span>
+            </label>
+            {error && (
+              <p role="alert" className="mb-3 text-sm text-[#a23b2c]">
+                {error}
+              </p>
+            )}
+            <button
+              type="submit"
+              disabled={loading}
+              className="button-primary min-h-11 w-full rounded-[10px] border border-[#1f6f5c] bg-[#1f6f5c] px-4 py-2.5 text-white disabled:opacity-60"
+            >
+              {loading ? 'Подождите...' : 'Сохранить пароль'}
+            </button>
+          </form>
+        </section>
+      </main>
+    )
   }
 
   return (
@@ -129,9 +260,19 @@ export default function Auth({ client }: AuthProps) {
               autoComplete="email"
               inputMode="email"
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              aria-invalid={Boolean(emailError)}
+              aria-describedby={emailError ? 'auth-email-error' : undefined}
+              onChange={(event) => {
+                setEmail(event.target.value)
+                setEmailError('')
+              }}
               className="mt-1.5 min-h-11 w-full rounded-[10px] border border-[#e3e0d7] bg-white px-3 py-2.5 text-[15px] text-[#1d1c19]"
             />
+            {emailError && (
+              <span id="auth-email-error" className="mt-1 block text-sm text-[#a23b2c]">
+                {emailError}
+              </span>
+            )}
           </label>
           <label htmlFor="auth-password" className="mb-3 block text-sm text-[#6f6c64]">
             Пароль
@@ -163,6 +304,16 @@ export default function Auth({ client }: AuthProps) {
           >
             {loading ? 'Подождите...' : mode === 'signin' ? 'Войти' : 'Зарегистрироваться'}
           </button>
+          {mode === 'signin' && (
+            <button
+              type="button"
+              disabled={loading || googleLoading}
+              onClick={sendPasswordReset}
+              className="mt-3 text-sm font-semibold text-[#1f6f5c] underline disabled:opacity-60"
+            >
+              Забыли пароль?
+            </button>
+          )}
         </form>
 
         <div className="my-4 flex items-center gap-3 text-sm text-[#6f6c64]">
