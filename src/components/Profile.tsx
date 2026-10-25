@@ -165,8 +165,7 @@ export default function Profile({ profile, orders, userId, onSave, onSignOut }: 
         <button
           type="submit"
           disabled={saving}
-          className="min-h-11 rounded-[10px] border border-[#1f6f5c] bg-[#1f6f5c] px-4 py-2.5 text-white"
-          style={{ backgroundColor: '#1F6F5C', color: '#FFFFFF' }}
+          className="button-primary min-h-11 rounded-[10px] border border-[#1f6f5c] bg-[#1f6f5c] px-4 py-2.5 text-white"
         >
           Сохранить
         </button>
@@ -198,7 +197,7 @@ export default function Profile({ profile, orders, userId, onSave, onSignOut }: 
       <button
         type="button"
         onClick={onSignOut}
-        className="mt-3 min-h-11 w-full rounded-[10px] border border-[#e3e0d7] bg-white px-4 py-2.5 text-sm text-[#1d1c19]"
+        className="button-secondary mt-3 min-h-11 w-full rounded-[10px] border border-[#e3e0d7] bg-white px-4 py-2.5 text-sm text-[#1d1c19]"
       >
         Выйти
       </button>

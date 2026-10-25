@@ -17,7 +17,6 @@ interface ResponseDraft {
 interface ResponseErrors {
   price?: string
   days?: string
-  message?: string
   form?: string
 }
 
@@ -66,10 +65,6 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
     if (!draft.days || !Number.isInteger(days) || days < 1 || days > 60) {
       nextErrors.days = 'Укажите срок от 1 до 60 дней'
     }
-    if (message.length < 2) {
-      nextErrors.message = 'Сообщение должно быть не короче 2 символов'
-    }
-
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors)
       return
@@ -184,18 +179,11 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
                     rows={3}
                     maxLength={400}
                     value={draft.message}
-                    aria-invalid={Boolean(errors.message)}
-                    aria-describedby={errors.message ? `message-error-${order.id}` : undefined}
                     onChange={(event) =>
                       setDraft((current) => ({ ...current, message: event.target.value }))
                     }
                     className="mt-1.5 min-h-[88px] w-full resize-y rounded-[10px] border border-[#e3e0d7] bg-white px-3 py-2.5 text-[15px] text-[#1d1c19]"
                   />
-                  {errors.message && (
-                    <span id={`message-error-${order.id}`} className="mt-1 block text-sm text-[#a23b2c]">
-                      {errors.message}
-                    </span>
-                  )}
                 </label>
                 {errors.form && (
                   <p role="alert" className="mb-2 text-sm text-[#a23b2c]">
@@ -206,15 +194,15 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="min-h-11 rounded-[10px] border border-[#1f6f5c] bg-[#1f6f5c] px-4 py-2.5 text-white"
+                    className="button-primary min-h-11 rounded-[10px] border border-[#1f6f5c] bg-[#1f6f5c] px-4 py-2.5 text-white"
                   >
-                    {submitting ? 'Отправляем…' : 'Отправить'}
+                    {submitting ? 'Отправляем…' : 'Отправить отклик'}
                   </button>
                   <button
                     type="button"
                     disabled={submitting}
                     onClick={closeResponseForm}
-                    className="min-h-11 rounded-[10px] border border-[#e3e0d7] bg-white px-4 py-2.5 text-[#1d1c19]"
+                    className="button-secondary min-h-11 rounded-[10px] border border-[#e3e0d7] bg-white px-4 py-2.5 text-[#1d1c19]"
                   >
                     Отмена
                   </button>
@@ -229,7 +217,7 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
                 <button
                   type="button"
                   onClick={() => openResponseForm(order)}
-                  className="min-h-11 rounded-[10px] border border-[#1f6f5c] bg-[#1f6f5c] px-4 py-2.5 text-white"
+                  className="button-primary min-h-11 rounded-[10px] border border-[#1f6f5c] bg-[#1f6f5c] px-4 py-2.5 text-white"
                 >
                   Откликнуться
                 </button>

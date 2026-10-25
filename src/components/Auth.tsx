@@ -135,7 +135,7 @@ export default function Auth({ client }: AuthProps) {
           <button
             type="submit"
             disabled={loading}
-            className="min-h-11 w-full rounded-[10px] border border-[#1f6f5c] bg-[#1f6f5c] px-4 py-2.5 text-white disabled:opacity-60"
+            className="button-primary min-h-11 w-full rounded-[10px] border border-[#1f6f5c] bg-[#1f6f5c] px-4 py-2.5 text-white disabled:opacity-60"
           >
             {loading ? 'Подождите…' : mode === 'signin' ? 'Войти' : 'Зарегистрироваться'}
           </button>

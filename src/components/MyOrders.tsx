@@ -60,7 +60,7 @@ export default function MyOrders({ orders, userId, onStatusChange }: MyOrdersPro
                 <button
                   type="button"
                   onClick={() => onStatusChange(order.id, 'done')}
-                  className="min-h-11 rounded-[10px] border border-[#1f6f5c] bg-[#1f6f5c] px-4 py-2.5 text-white"
+                  className="button-primary min-h-11 rounded-[10px] border border-[#1f6f5c] bg-[#1f6f5c] px-4 py-2.5 text-white"
                 >
                   Отметить сданным
                 </button>
@@ -71,7 +71,7 @@ export default function MyOrders({ orders, userId, onStatusChange }: MyOrdersPro
                 <button
                   type="button"
                   onClick={() => onStatusChange(order.id, 'paid')}
-                  className="min-h-11 rounded-[10px] border border-[#1f6f5c] bg-[#1f6f5c] px-4 py-2.5 text-white"
+                  className="button-primary min-h-11 rounded-[10px] border border-[#1f6f5c] bg-[#1f6f5c] px-4 py-2.5 text-white"
                 >
                   Оплату получил
                 </button>
