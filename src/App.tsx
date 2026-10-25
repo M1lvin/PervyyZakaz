@@ -6,82 +6,31 @@ import MyOrders from './components/MyOrders'
 import PlaceOrder from './components/PlaceOrder'
 import Profile, { FirstOrderStamp, loadProfile, type UserProfile } from './components/Profile'
 import { supabase } from './lib/supabase'
+import type { MyOrder, Order, OrderStatus } from './data/orders'
 import {
-  orderStatuses,
-  orders as initialOrders,
-  skills,
-  type MyOrder,
-  type Order,
-  type OrderStatus,
-} from './data/orders'
+  createOrder,
+  loadOrders,
+  orderErrorMessage,
+  takeOrder as submitOrderResponse,
+  updateOrderStatus,
+} from './lib/orders'
 
 const tabs = ['Лента', 'Разместить', 'Мои заказы', 'Профиль'] as const
-const ordersStorageKey = 'pervyy-zakaz-orders-v1'
-const userIdStorageKey = 'pervyy-zakaz-user-v1'
 
 type Tab = (typeof tabs)[number]
 
-function asMyOrder(order: Order): MyOrder {
-  return {
-    ...order,
-    status: 'open',
-    createdBy: null,
-    takenBy: null,
-  }
-}
-
-function isMyOrder(value: unknown): value is MyOrder {
-  if (typeof value !== 'object' || value === null) return false
-  const order = value as Record<string, unknown>
-  return (
-    typeof order.id === 'string' &&
-    typeof order.title === 'string' &&
-    typeof order.business === 'string' &&
-    typeof order.description === 'string' &&
-    typeof order.days === 'number' &&
-    typeof order.price === 'number' &&
-    skills.some((skill) => skill === order.skill) &&
-    orderStatuses.some((status) => status === order.status) &&
-    (typeof order.createdBy === 'string' || order.createdBy === null) &&
-    (typeof order.takenBy === 'string' || order.takenBy === null) &&
-    (order.responsePrice === undefined || typeof order.responsePrice === 'number') &&
-    (order.responseDays === undefined || typeof order.responseDays === 'number')
-  )
-}
-
-function loadOrders(): MyOrder[] {
-  const stored = localStorage.getItem(ordersStorageKey)
-  if (stored === null) return initialOrders.map(asMyOrder)
-
-  const parsed: unknown = JSON.parse(stored)
-  if (!Array.isArray(parsed) || !parsed.every(isMyOrder)) {
-    throw new Error('Сохранённые заказы имеют неверный формат.')
-  }
-  return parsed
-}
-
-function loadUserId(): string {
-  const stored = localStorage.getItem(userIdStorageKey)
-  if (stored !== null) return stored
-
-  const userId = crypto.randomUUID()
-  localStorage.setItem(userIdStorageKey, userId)
-  return userId
-}
-
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('Лента')
-  const [userId] = useState(loadUserId)
-  const [orders, setOrders] = useState<MyOrder[]>(loadOrders)
+  const [orders, setOrders] = useState<MyOrder[]>([])
   const [profile, setProfile] = useState<UserProfile>(loadProfile)
   const [notice, setNotice] = useState<string | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [authLoading, setAuthLoading] = useState(true)
   const [authError, setAuthError] = useState('')
-
-  useEffect(() => {
-    localStorage.setItem(ordersStorageKey, JSON.stringify(orders))
-  }, [orders])
+  const [ordersLoading, setOrdersLoading] = useState(true)
+  const [ordersError, setOrdersError] = useState('')
+  const [ordersReload, setOrdersReload] = useState(0)
+  const userId = session?.user.id ?? ''
 
   useEffect(() => {
     if (!supabase) {
@@ -118,43 +67,85 @@ export default function App() {
     }
   }, [])
 
-  function publishOrder(order: Order) {
-    setOrders((current) => [
-      { ...order, status: 'open', createdBy: userId, takenBy: null },
-      ...current,
-    ])
-    setActiveTab('Лента')
-    setNotice('Заказ опубликован')
+  useEffect(() => {
+    if (!session) {
+      setOrders([])
+      setOrdersLoading(false)
+      return
+    }
+    if (!supabase) return
+
+    let active = true
+    const client = supabase
+    setOrdersLoading(true)
+    setOrdersError('')
+    loadOrders(client)
+      .then((loadedOrders) => {
+        if (active) setOrders(loadedOrders)
+      })
+      .catch((error: unknown) => {
+        if (active) setOrdersError(orderErrorMessage(error))
+      })
+      .finally(() => {
+        if (active) setOrdersLoading(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [userId, ordersReload, session])
+
+  async function publishOrder(order: Order): Promise<boolean> {
+    if (!supabase || !userId) {
+      setOrdersError('Войдите в аккаунт, чтобы опубликовать заказ.')
+      return false
+    }
+
+    setOrdersError('')
+    try {
+      const createdOrder = await createOrder(supabase, order, userId)
+      setOrders((current) => [createdOrder, ...current])
+      setActiveTab('Лента')
+      setNotice('Заказ опубликован')
+      return true
+    } catch (error) {
+      setOrdersError(orderErrorMessage(error))
+      return false
+    }
   }
 
-  function takeOrder(orderId: string, price: number, days: number) {
-    setOrders((current) =>
-      current.map((order) =>
-        order.id === orderId
-          ? {
-              ...order,
-              status: 'in_progress',
-              takenBy: userId,
-              responsePrice: price,
-              responseDays: days,
-            }
-          : order,
-      ),
-    )
+  async function takeOrder(
+    orderId: string,
+    price: number,
+    days: number,
+    message: string,
+  ): Promise<boolean> {
+    if (!supabase || !userId) {
+      setOrdersError('Войдите в аккаунт, чтобы откликнуться на заказ.')
+      return false
+    }
+
+    setOrdersError('')
+    try {
+      const updatedOrder = await submitOrderResponse(supabase, orderId, userId, price, days, message)
+      setOrders((current) => current.map((order) => order.id === orderId ? updatedOrder : order))
+      return true
+    } catch (error) {
+      setOrdersError(orderErrorMessage(error))
+      return false
+    }
   }
 
-  function changeOrderStatus(orderId: string, status: OrderStatus) {
-    setOrders((current) =>
-      current.map((order) => {
-        const canMarkDone =
-          order.takenBy === userId && order.status === 'in_progress' && status === 'done'
-        const canMarkPaid =
-          order.createdBy === userId && order.status === 'done' && status === 'paid'
-        return order.id === orderId && (canMarkDone || canMarkPaid)
-          ? { ...order, status }
-          : order
-      }),
-    )
+  async function changeOrderStatus(orderId: string, status: OrderStatus) {
+    if (!supabase || !userId || (status !== 'done' && status !== 'paid')) return
+
+    setOrdersError('')
+    try {
+      const updatedOrder = await updateOrderStatus(supabase, orderId, userId, status)
+      setOrders((current) => current.map((order) => order.id === orderId ? updatedOrder : order))
+    } catch (error) {
+      setOrdersError(orderErrorMessage(error))
+    }
   }
 
   async function signOut() {
@@ -229,7 +220,23 @@ export default function App() {
             {authError}
           </p>
         )}
-        {activeTab === 'Лента' ? (
+        {ordersError && (
+          <div role="alert" className="mb-3 rounded-[10px] bg-[#f8e9e6] px-4 py-3 text-sm text-[#a23b2c]">
+            <p>{ordersError}</p>
+            <button
+              type="button"
+              onClick={() => setOrdersReload((current) => current + 1)}
+              className="mt-2 font-semibold underline"
+            >
+              Обновить список
+            </button>
+          </div>
+        )}
+        {ordersLoading ? (
+          <p role="status" className="py-8 text-center text-sm text-[#6f6c64]">
+            Загружаем заказы…
+          </p>
+        ) : activeTab === 'Лента' ? (
           <Feed orders={orders} userId={userId} onTakeOrder={takeOrder} notice={notice} />
         ) : activeTab === 'Разместить' ? (
           <PlaceOrder onPublish={publishOrder} />

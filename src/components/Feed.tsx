@@ -1,12 +1,10 @@
 import { useState, type FormEvent } from 'react'
-import { skills, type MyOrder, type OrderResponse } from '../data/orders'
-
-const responsesStorageKey = 'pervyy-zakaz-responses-v1'
+import { skills, type MyOrder } from '../data/orders'
 
 interface FeedProps {
   orders: MyOrder[]
   userId: string
-  onTakeOrder: (orderId: string, price: number, days: number) => void
+  onTakeOrder: (orderId: string, price: number, days: number, message: string) => Promise<boolean>
   notice?: string | null
 }
 
@@ -31,22 +29,12 @@ function responseForOrder(order: MyOrder): OrderDraftForm {
 
 interface OrderDraftForm extends ResponseDraft {}
 
-function readResponses(): OrderResponse[] {
-  const stored = localStorage.getItem(responsesStorageKey)
-  if (!stored) return []
-
-  const parsed: unknown = JSON.parse(stored)
-  if (!Array.isArray(parsed)) {
-    throw new Error('Сохранённые отклики имеют неверный формат.')
-  }
-  return parsed as OrderResponse[]
-}
-
 export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps) {
   const [skillFilter, setSkillFilter] = useState<string>('Все')
   const [openOrderId, setOpenOrderId] = useState<string | null>(null)
   const [draft, setDraft] = useState<ResponseDraft>(emptyDraft)
   const [errors, setErrors] = useState<ResponseErrors>({})
+  const [submitting, setSubmitting] = useState(false)
 
   const visibleOrders = orders.filter(
     (order) =>
@@ -65,7 +53,7 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
     setErrors({})
   }
 
-  function submitResponse(event: FormEvent<HTMLFormElement>, order: MyOrder) {
+  async function submitResponse(event: FormEvent<HTMLFormElement>, order: MyOrder) {
     event.preventDefault()
     const price = Number(draft.price)
     const days = Number(draft.days)
@@ -87,21 +75,13 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
       return
     }
 
-    const response: OrderResponse = {
-      orderId: order.id,
-      price,
-      days,
-      message,
-      createdAt: new Date().toISOString(),
-    }
-
+    setSubmitting(true)
     try {
-      const responses = readResponses()
-      localStorage.setItem(responsesStorageKey, JSON.stringify([...responses, response]))
-      onTakeOrder(order.id, price, days)
-      closeResponseForm()
-    } catch {
-      setErrors({ form: 'Не удалось сохранить отклик на этом устройстве. Попробуйте ещё раз.' })
+      if (await onTakeOrder(order.id, price, days, message)) {
+        closeResponseForm()
+      }
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -225,12 +205,14 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="submit"
+                    disabled={submitting}
                     className="min-h-11 rounded-[10px] border border-[#1f6f5c] bg-[#1f6f5c] px-4 py-2.5 text-white"
                   >
-                    Отправить
+                    {submitting ? 'Отправляем…' : 'Отправить'}
                   </button>
                   <button
                     type="button"
+                    disabled={submitting}
                     onClick={closeResponseForm}
                     className="min-h-11 rounded-[10px] border border-[#e3e0d7] bg-white px-4 py-2.5 text-[#1d1c19]"
                   >

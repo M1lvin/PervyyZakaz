@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { skills, type Order, type Skill } from '../data/orders'
 
 interface PlaceOrderProps {
-  onPublish: (order: Order) => void
+  onPublish: (order: Order) => Promise<boolean>
 }
 
 interface FormValues {
@@ -33,8 +33,9 @@ const initialValues: FormValues = {
 export default function PlaceOrder({ onPublish }: PlaceOrderProps) {
   const [values, setValues] = useState<FormValues>(initialValues)
   const [errors, setErrors] = useState<FormErrors>({})
+  const [submitting, setSubmitting] = useState(false)
 
-  function submitOrder(event: FormEvent<HTMLFormElement>) {
+  async function submitOrder(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
     const business = values.business.trim()
@@ -59,16 +60,20 @@ export default function PlaceOrder({ onPublish }: PlaceOrderProps) {
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) return
 
-    onPublish({
-      id: crypto.randomUUID(),
-      title,
-      business,
-      days,
-      skill: values.skill,
-      description: values.description.trim(),
-      price: budget,
-    })
-    setValues(initialValues)
+    setSubmitting(true)
+    try {
+      const published = await onPublish({
+        title,
+        business,
+        days,
+        skill: values.skill,
+        description: values.description.trim(),
+        price: budget,
+      })
+      if (published) setValues(initialValues)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   function update<K extends keyof FormValues>(field: K, value: FormValues[K]) {
@@ -205,10 +210,11 @@ export default function PlaceOrder({ onPublish }: PlaceOrderProps) {
 
         <button
           type="submit"
+          disabled={submitting}
           className="sticky bottom-20 z-10 min-h-11 w-full rounded-[10px] border border-[#1f6f5c] bg-[#1f6f5c] px-4 py-2.5 text-white shadow-md"
           style={{ backgroundColor: '#1F6F5C', color: '#FFFFFF' }}
         >
-          Опубликовать заказ
+          {submitting ? 'Публикуем…' : 'Опубликовать заказ'}
         </button>
       </div>
     </form>
