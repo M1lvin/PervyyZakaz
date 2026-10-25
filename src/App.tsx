@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
+import { LayoutList, Package, PlusCircle, User } from 'lucide-react'
 import Auth from './components/Auth'
 import Feed from './components/Feed'
 import MyOrders from './components/MyOrders'
@@ -21,9 +22,16 @@ import {
 } from './lib/profiles'
 
 const tabs = ['Лента', 'Разместить', 'Мои заказы', 'Профиль'] as const
+const tabIcons = {
+  Лента: LayoutList,
+  Разместить: PlusCircle,
+  'Мои заказы': Package,
+  Профиль: User,
+} as const
 
 type Tab = (typeof tabs)[number]
 type Theme = 'light' | 'dark' | 'system'
+type ProfilePage = 'profile' | 'settings'
 
 const emptyProfile: UserProfile = { name: '', contact: '', skills: [] }
 
@@ -34,6 +42,7 @@ function initialTheme(): Theme {
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('Лента')
+  const [profilePage, setProfilePage] = useState<ProfilePage>('profile')
   const [theme, setTheme] = useState<Theme>(initialTheme)
   const [orders, setOrders] = useState<MyOrder[]>([])
   const [profile, setProfile] = useState<UserProfile>(emptyProfile)
@@ -352,13 +361,68 @@ export default function App() {
           <p role="status" className="py-8 text-center text-sm text-secondary">
             Загружаем профиль…
           </p>
+        ) : activeTab === 'Профиль' && profilePage === 'settings' ? (
+          <section aria-label="Настройки">
+            <div className="mb-4 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setProfilePage('profile')}
+                className="button-secondary min-h-11 rounded-[10px] px-4 py-2.5 text-sm"
+              >
+                ← Назад
+              </button>
+              <h2 className="text-[22px] font-semibold tracking-tight">Настройки</h2>
+            </div>
+            {[
+              {
+                title: 'Тема',
+                content: (
+                  <div className="flex flex-col gap-2">
+                    {([
+                      ['light', 'Светлая'],
+                      ['dark', 'Тёмная'],
+                      ['system', 'Как в системе'],
+                    ] as const).map(([value, label]) => (
+                      <label
+                        key={value}
+                        className={`theme-option flex cursor-pointer items-center gap-2 px-3 py-2 text-sm ${
+                          theme === value ? 'is-selected' : ''
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="theme"
+                          value={value}
+                          checked={theme === value}
+                          onChange={() => changeTheme(value)}
+                          className="control-accent h-4 w-4"
+                        />
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+                ),
+              },
+              {
+                title: 'Язык',
+                content: <p className="text-secondary text-sm">Скоро</p>,
+              },
+            ].map((section) => (
+              <section
+                key={section.title}
+                className="card-background mb-3 rounded-xl border border-default p-4"
+              >
+                <h3 className="mb-3 text-base font-semibold">{section.title}</h3>
+                {section.content}
+              </section>
+            ))}
+          </section>
         ) : activeTab === 'Профиль' ? (
           <Profile
             profile={profile}
             orders={orders}
             userId={userId}
-            theme={theme}
-            onThemeChange={changeTheme}
+            onOpenSettings={() => setProfilePage('settings')}
             onSave={saveUserProfile}
             onSignOut={signOut}
           />
@@ -372,24 +436,29 @@ export default function App() {
         className="card-background sticky bottom-0 grid grid-cols-4 gap-1 border-t border-default px-2 pt-1.5"
         style={{ paddingBottom: 'calc(0.375rem + env(safe-area-inset-bottom, 0px))' }}
       >
-        {tabs.map((tab) => (
-          <button
-            key={tab}
-            type="button"
-            aria-current={activeTab === tab ? 'page' : undefined}
-            className={`min-h-[52px] rounded-lg px-1 py-1 text-xs ${
-              activeTab === tab
-                ? 'font-semibold text-accent'
-                : 'text-secondary'
-            }`}
-            onClick={() => {
-              setNotice(null)
-              setActiveTab(tab)
-            }}
-          >
-            {tab}
-          </button>
-        ))}
+        {tabs.map((tab) => {
+          const Icon = tabIcons[tab]
+          return (
+            <button
+              key={tab}
+              type="button"
+              aria-current={activeTab === tab ? 'page' : undefined}
+              className={`flex min-h-[52px] flex-col items-center justify-center gap-0.5 rounded-lg px-1 py-1 text-xs ${
+                activeTab === tab
+                  ? 'font-semibold text-accent'
+                  : 'text-secondary'
+              }`}
+              onClick={() => {
+                setNotice(null)
+                if (tab === 'Профиль') setProfilePage('profile')
+                setActiveTab(tab)
+              }}
+            >
+              <Icon aria-hidden="true" size={20} strokeWidth={1.8} />
+              {tab}
+            </button>
+          )
+        })}
       </nav>
     </div>
   )

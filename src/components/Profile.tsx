@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { skills, type MyOrder, type Skill } from '../data/orders'
+import Button from './ui/Button'
 
 export interface UserProfile {
   name: string
@@ -11,8 +12,7 @@ interface ProfileProps {
   profile: UserProfile
   orders: MyOrder[]
   userId: string
-  theme: 'light' | 'dark' | 'system'
-  onThemeChange: (theme: 'light' | 'dark' | 'system') => void
+  onOpenSettings: () => void
   onSave: (profile: UserProfile) => Promise<boolean>
   onSignOut: () => void
 }
@@ -41,8 +41,7 @@ export default function Profile({
   profile,
   orders,
   userId,
-  theme,
-  onThemeChange,
+  onOpenSettings,
   onSave,
   onSignOut,
 }: ProfileProps) {
@@ -202,35 +201,22 @@ export default function Profile({
             : 'Печать появится после первого оплаченного заказа'}
         </p>
       </div>
-      <fieldset className="theme-settings mt-3 rounded-xl border p-4">
-        <legend className="px-1 text-sm">Настройки</legend>
-        <div className="flex flex-col gap-2">
-          {([
-            ['light', 'Светлая'],
-            ['dark', 'Тёмная'],
-            ['system', 'Как в системе'],
-          ] as const).map(([value, label]) => (
-            <label key={value} className="flex cursor-pointer items-center gap-2 text-sm">
-              <input
-                type="radio"
-                name="theme"
-                value={value}
-                checked={theme === value}
-                onChange={() => onThemeChange(value)}
-                className="control-accent h-4 w-4"
-              />
-              {label}
-            </label>
-          ))}
-        </div>
-      </fieldset>
-      <button
+      <Button
         type="button"
+        variant="secondary"
+        onClick={onOpenSettings}
+        className="mt-3 w-full text-sm"
+      >
+        Настройки
+      </Button>
+      <Button
+        type="button"
+        variant="secondary"
         onClick={onSignOut}
-        className="button-secondary mt-3 min-h-11 w-full rounded-[10px] px-4 py-2.5 text-sm"
+        className="mt-3 w-full text-sm"
       >
         Выйти
-      </button>
+      </Button>
     </section>
   )
 }

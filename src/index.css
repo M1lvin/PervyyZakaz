@@ -4,46 +4,62 @@
 :root[data-theme="light"],
 :root[data-theme="system"] {
   color-scheme: light;
-  --page-bg: #f6f5f1;
-  --card-bg: #ffffff;
-  --text-primary: #1d1c19;
-  --text-secondary: #6f6c64;
-  --border-color: #e3e0d7;
-  --accent: #1f6f5c;
-  --on-accent: #ffffff;
-  --error: #a23b2c;
-  --error-bg: #f8e9e6;
-  --accent-subtle: #e4f0eb;
+  --color-bg: #f6f5f1;
+  --color-surface: #ffffff;
+  --color-border: #e3e0d7;
+  --color-text: #1d1c19;
+  --color-text-muted: #6f6c64;
+  --color-accent: #1f6f5c;
+  --color-accent-text: #ffffff;
+  --color-accent-soft: #e4f0eb;
+  --color-danger: #a23b2c;
+  --color-danger-soft: #f8e9e6;
+  --shadow-card: 0 2px 8px rgb(29 28 25 / 8%);
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --page-bg: #14140f;
-  --card-bg: #1e1e18;
-  --text-primary: #f1f0e9;
-  --text-secondary: #b3b0a5;
-  --border-color: #414137;
-  --accent: #7cc9b0;
-  --on-accent: #10261f;
-  --error: #ff9b8e;
-  --error-bg: #3a2421;
-  --accent-subtle: #263b33;
+  --color-bg: #121210;
+  --color-surface: #1c1c19;
+  --color-border: #34342e;
+  --color-text: #f2f0ea;
+  --color-text-muted: #a3a097;
+  --color-accent: #7cc9b0;
+  --color-accent-text: #10261f;
+  --color-accent-soft: #1d3a31;
+  --color-danger: #ee8c82;
+  --color-danger-soft: #3a2421;
+  --shadow-card: 0 2px 8px rgb(0 0 0 / 24%);
 }
 
 @media (prefers-color-scheme: dark) {
   :root[data-theme="system"] {
     color-scheme: dark;
-    --page-bg: #14140f;
-    --card-bg: #1e1e18;
-    --text-primary: #f1f0e9;
-    --text-secondary: #b3b0a5;
-    --border-color: #414137;
-    --accent: #7cc9b0;
-    --on-accent: #10261f;
-    --error: #ff9b8e;
-    --error-bg: #3a2421;
-    --accent-subtle: #263b33;
+    --color-bg: #121210;
+    --color-surface: #1c1c19;
+    --color-border: #34342e;
+    --color-text: #f2f0ea;
+    --color-text-muted: #a3a097;
+    --color-accent: #7cc9b0;
+    --color-accent-text: #10261f;
+    --color-accent-soft: #1d3a31;
+    --color-danger: #ee8c82;
+    --color-danger-soft: #3a2421;
+    --shadow-card: 0 2px 8px rgb(0 0 0 / 24%);
   }
+}
+
+:root {
+  --page-bg: var(--color-bg);
+  --card-bg: var(--color-surface);
+  --text-primary: var(--color-text);
+  --text-secondary: var(--color-text-muted);
+  --border-color: var(--color-border);
+  --accent: var(--color-accent);
+  --on-accent: var(--color-accent-text);
+  --error: var(--color-danger);
+  --error-bg: var(--color-danger-soft);
+  --accent-subtle: var(--color-accent-soft);
 }
 
 * {
@@ -149,6 +165,109 @@ button {
 .theme-option.is-selected {
   border-color: var(--accent);
   background-color: var(--accent-subtle);
+}
+
+.ui-button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 0.625rem 1rem;
+  font: inherit;
+  text-decoration: none;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.ui-button-primary {
+  background-color: var(--color-accent);
+  color: var(--color-accent-text);
+}
+
+.ui-button-primary:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--color-accent) 88%, var(--color-text));
+}
+
+.ui-button-secondary {
+  border-color: var(--color-border);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+}
+
+.ui-button-secondary:hover:not(:disabled) {
+  background-color: var(--color-accent-soft);
+}
+
+.ui-button-ghost {
+  background-color: transparent;
+  color: var(--color-text);
+}
+
+.ui-button-ghost:hover:not(:disabled) {
+  background-color: var(--color-accent-soft);
+}
+
+.ui-button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.ui-button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.ui-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.ui-card {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.ui-input {
+  min-height: 44px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background-color: var(--color-surface);
+  padding: 0.625rem 0.75rem;
+  color: var(--color-text);
+}
+
+.ui-badge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: 9999px;
+  background-color: var(--color-accent-soft);
+  padding: 0.125rem 0.625rem;
+  color: var(--color-accent);
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+}
+
+.ui-badge-status-open,
+.ui-badge-status-in_progress {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.ui-badge-status-done,
+.ui-badge-status-paid {
+  border-color: var(--color-border);
+  background-color: var(--color-surface);
+  color: var(--color-text-muted);
 }
 
 .button-primary {

@@ -1,5 +1,9 @@
 import { useState, type FormEvent } from 'react'
 import { skills, type MyOrder } from '../data/orders'
+import Badge from './ui/Badge'
+import Button from './ui/Button'
+import Card from './ui/Card'
+import Input from './ui/Input'
 
 interface FeedProps {
   orders: MyOrder[]
@@ -95,7 +99,7 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
           id="skill-filter"
           value={skillFilter}
           onChange={(event) => setSkillFilter(event.target.value)}
-          className="field-control min-h-11 w-full max-w-60 rounded-[10px] border px-3 py-2.5 text-[15px]"
+          className="ui-input w-full max-w-60"
         >
           <option>Все</option>
           {skills.map((skill) => (
@@ -106,9 +110,10 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
 
       {visibleOrders.length > 0 ? (
         visibleOrders.map((order) => (
-          <article
+          <Card
+            as="article"
             key={order.id}
-            className="card-background mb-3 rounded-xl border border-default p-4"
+            className="mb-3 p-4"
           >
             <div className="flex items-start justify-between gap-3">
               <h2 className="text-base font-semibold">{order.title}</h2>
@@ -117,7 +122,7 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
               </span>
             </div>
             <p className="text-secondary mt-1 text-[13px]">
-              {order.business} · {order.days} дн. · {order.skill}
+              {order.business} · {order.days} дн. · <Badge>{order.skill}</Badge>
             </p>
             <p className="mb-3.5 mt-2.5 text-[15px]">{order.description}</p>
 
@@ -128,50 +133,34 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
                 onSubmit={(event) => submitResponse(event, order)}
               >
                 <div className="grid grid-cols-2 gap-3">
-                  <label className="text-secondary mb-3 block text-sm">
-                    Ваша цена, сом
-                    <input
-                      type="number"
-                      min="1"
-                      max="500000"
-                      step="1"
-                      inputMode="numeric"
-                      value={draft.price}
-                      aria-invalid={Boolean(errors.price)}
-                      aria-describedby={errors.price ? `price-error-${order.id}` : undefined}
-                      onChange={(event) =>
-                        setDraft((current) => ({ ...current, price: event.target.value }))
-                      }
-                      className="field-control mt-1.5 min-h-11 w-full rounded-[10px] border px-3 py-2.5 text-[15px]"
-                    />
-                    {errors.price && (
-                      <span id={`price-error-${order.id}`} className="text-error mt-1 block text-sm">
-                        {errors.price}
-                      </span>
-                    )}
-                  </label>
-                  <label className="text-secondary mb-3 block text-sm">
-                    Срок, дней
-                    <input
-                      type="number"
-                      min="1"
-                      max="60"
-                      step="1"
-                      inputMode="numeric"
-                      value={draft.days}
-                      aria-invalid={Boolean(errors.days)}
-                      aria-describedby={errors.days ? `days-error-${order.id}` : undefined}
-                      onChange={(event) =>
-                        setDraft((current) => ({ ...current, days: event.target.value }))
-                      }
-                      className="field-control mt-1.5 min-h-11 w-full rounded-[10px] border px-3 py-2.5 text-[15px]"
-                    />
-                    {errors.days && (
-                      <span id={`days-error-${order.id}`} className="text-error mt-1 block text-sm">
-                        {errors.days}
-                      </span>
-                    )}
-                  </label>
+                  <Input
+                    id={`price-${order.id}`}
+                    label="Ваша цена, сом"
+                    type="number"
+                    min="1"
+                    max="500000"
+                    step="1"
+                    inputMode="numeric"
+                    value={draft.price}
+                    error={errors.price}
+                    onChange={(event) =>
+                      setDraft((current) => ({ ...current, price: event.target.value }))
+                    }
+                  />
+                  <Input
+                    id={`days-${order.id}`}
+                    label="Срок, дней"
+                    type="number"
+                    min="1"
+                    max="60"
+                    step="1"
+                    inputMode="numeric"
+                    value={draft.days}
+                    error={errors.days}
+                    onChange={(event) =>
+                      setDraft((current) => ({ ...current, days: event.target.value }))
+                    }
+                  />
                 </div>
                 <label className="text-secondary mb-3 block text-sm">
                   Сообщение заказчику
@@ -182,7 +171,7 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
                     onChange={(event) =>
                       setDraft((current) => ({ ...current, message: event.target.value }))
                     }
-                    className="field-control mt-1.5 min-h-[88px] w-full resize-y rounded-[10px] border px-3 py-2.5 text-[15px]"
+                    className="ui-input mt-1.5 min-h-[88px] w-full resize-y text-[15px]"
                   />
                 </label>
                 {errors.form && (
@@ -191,21 +180,21 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
                   </p>
                 )}
                 <div className="flex flex-wrap gap-2">
-                  <button
+                  <Button
                     type="submit"
                     disabled={submitting}
-                    className="button-primary min-h-11 rounded-[10px] px-4 py-2.5"
+                    variant="primary"
                   >
                     {submitting ? 'Отправляем…' : 'Отправить отклик'}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
                     disabled={submitting}
                     onClick={closeResponseForm}
-                    className="button-secondary min-h-11 rounded-[10px] px-4 py-2.5"
+                    variant="secondary"
                   >
                     Отмена
-                  </button>
+                  </Button>
                 </div>
               </form>
             ) : (
@@ -214,22 +203,22 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
                   Это ваш заказ. Студенты увидят его здесь.
                 </p>
               ) : (
-                <button
+                <Button
                   type="button"
                   onClick={() => openResponseForm(order)}
-                  className="button-primary min-h-11 rounded-[10px] px-4 py-2.5"
+                  variant="primary"
                 >
                   Откликнуться
-                </button>
+                </Button>
               )
             )}
-          </article>
+          </Card>
         ))
       ) : (
-        <div className="text-secondary px-3 py-10 text-center">
+        <Card className="text-secondary px-3 py-10 text-center">
           <h2 className="text-primary mb-1 text-base font-semibold">Пока нет заказов</h2>
           <p>Попробуйте выбрать другой навык.</p>
-        </div>
+        </Card>
       )}
     </section>
   )
