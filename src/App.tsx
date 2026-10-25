@@ -23,11 +23,18 @@ import {
 const tabs = ['Лента', 'Разместить', 'Мои заказы', 'Профиль'] as const
 
 type Tab = (typeof tabs)[number]
+type Theme = 'light' | 'dark' | 'system'
 
 const emptyProfile: UserProfile = { name: '', contact: '', skills: [] }
 
+function initialTheme(): Theme {
+  const theme = document.documentElement.dataset.theme
+  return theme === 'light' || theme === 'dark' || theme === 'system' ? theme : 'system'
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('Лента')
+  const [theme, setTheme] = useState<Theme>(initialTheme)
   const [orders, setOrders] = useState<MyOrder[]>([])
   const [profile, setProfile] = useState<UserProfile>(emptyProfile)
   const [profileLoading, setProfileLoading] = useState(true)
@@ -42,6 +49,30 @@ export default function App() {
   const [ordersError, setOrdersError] = useState('')
   const [ordersReload, setOrdersReload] = useState(0)
   const userId = session?.user.id ?? ''
+
+  function changeTheme(nextTheme: Theme) {
+    localStorage.setItem('theme', nextTheme)
+    document.documentElement.dataset.theme = nextTheme
+    setTheme(nextTheme)
+  }
+
+  useEffect(() => {
+    const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
+    if (!themeColor) return
+
+    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
+    const updateThemeColor = () => {
+      themeColor.content = getComputedStyle(document.documentElement)
+        .getPropertyValue('--page-bg')
+        .trim()
+    }
+
+    updateThemeColor()
+    if (theme !== 'system') return
+
+    systemTheme.addEventListener('change', updateThemeColor)
+    return () => systemTheme.removeEventListener('change', updateThemeColor)
+  }, [theme])
 
   useEffect(() => {
     if (!supabase) {
@@ -226,7 +257,7 @@ export default function App() {
   if (!supabase) {
     return (
       <div className="mx-auto flex min-h-dvh max-w-[480px] items-center px-4">
-        <p role="alert" className="rounded-xl border border-[#e3e0d7] bg-white p-4 text-sm text-[#a23b2c]">
+        <p role="alert" className="rounded-xl border border-default card-background p-4 text-sm text-error">
           Для входа настройте VITE_SUPABASE_URL и VITE_SUPABASE_ANON_KEY в файле .env
         </p>
       </div>
@@ -235,7 +266,7 @@ export default function App() {
 
   if (authLoading) {
     return (
-      <div className="mx-auto flex min-h-dvh max-w-[480px] items-center justify-center text-sm text-[#6f6c64]">
+      <div className="page-background mx-auto flex min-h-dvh max-w-[480px] items-center justify-center text-sm text-secondary">
         Загрузка...
       </div>
     )
@@ -243,9 +274,9 @@ export default function App() {
 
   if (!session || passwordRecovery) {
     return (
-      <div className="mx-auto flex min-h-dvh max-w-[480px] flex-col bg-[#f6f5f1] text-[#1d1c19]">
+      <div className="page-background mx-auto flex min-h-dvh max-w-[480px] flex-col">
         {authError && (
-          <p role="alert" className="mx-4 mt-4 text-sm text-[#a23b2c]">
+          <p role="alert" className="mx-4 mt-4 text-sm text-error">
             {authError}
           </p>
         )}
@@ -262,12 +293,12 @@ export default function App() {
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-[480px] flex-col bg-[#f6f5f1] text-[#1d1c19]">
+    <div className="page-background mx-auto flex min-h-dvh max-w-[480px] flex-col">
       <header className="px-5 pb-3 pt-5">
         <div className="flex items-center justify-between gap-3">
           <div>
             <h1 className="text-[22px] font-semibold tracking-tight">Первый заказ</h1>
-            <p className="mt-0.5 text-sm text-[#6f6c64]">
+            <p className="mt-0.5 text-sm text-secondary">
               Задачи от местного бизнеса для студентов
             </p>
           </div>
@@ -281,17 +312,17 @@ export default function App() {
 
       <main className="flex-1 px-4 pb-28 pt-1">
         {authError && (
-          <p role="alert" className="mb-3 text-sm text-[#a23b2c]">
+          <p role="alert" className="mb-3 text-sm text-error">
             {authError}
           </p>
         )}
         {passwordChangedNotice && (
-          <p role="status" className="mb-3 text-sm text-[#1f6f5c]">
+          <p role="status" className="mb-3 text-sm text-accent">
             Пароль изменён
           </p>
         )}
         {ordersError && (
-          <div role="alert" className="mb-3 rounded-[10px] bg-[#f8e9e6] px-4 py-3 text-sm text-[#a23b2c]">
+          <div role="alert" className="feedback-error mb-3 rounded-[10px] px-4 py-3 text-sm">
             <p>{ordersError}</p>
             <button
               type="button"
@@ -303,12 +334,12 @@ export default function App() {
           </div>
         )}
         {activeTab === 'Профиль' && profileError && (
-          <p role="alert" className="mb-3 rounded-[10px] bg-[#f8e9e6] px-4 py-3 text-sm text-[#a23b2c]">
+          <p role="alert" className="feedback-error mb-3 rounded-[10px] px-4 py-3 text-sm">
             {profileError}
           </p>
         )}
         {ordersLoading ? (
-          <p role="status" className="py-8 text-center text-sm text-[#6f6c64]">
+          <p role="status" className="py-8 text-center text-sm text-secondary">
             Загружаем заказы…
           </p>
         ) : activeTab === 'Лента' ? (
@@ -318,7 +349,7 @@ export default function App() {
         ) : activeTab === 'Мои заказы' ? (
           <MyOrders orders={orders} userId={userId} onStatusChange={changeOrderStatus} />
         ) : activeTab === 'Профиль' && profileLoading ? (
-          <p role="status" className="py-8 text-center text-sm text-[#6f6c64]">
+          <p role="status" className="py-8 text-center text-sm text-secondary">
             Загружаем профиль…
           </p>
         ) : activeTab === 'Профиль' ? (
@@ -326,6 +357,8 @@ export default function App() {
             profile={profile}
             orders={orders}
             userId={userId}
+            theme={theme}
+            onThemeChange={changeTheme}
             onSave={saveUserProfile}
             onSignOut={signOut}
           />
@@ -336,7 +369,7 @@ export default function App() {
 
       <nav
         aria-label="Разделы"
-        className="sticky bottom-0 grid grid-cols-4 gap-1 border-t border-[#e3e0d7] bg-white px-2 pt-1.5"
+        className="card-background sticky bottom-0 grid grid-cols-4 gap-1 border-t border-default px-2 pt-1.5"
         style={{ paddingBottom: 'calc(0.375rem + env(safe-area-inset-bottom, 0px))' }}
       >
         {tabs.map((tab) => (
@@ -346,8 +379,8 @@ export default function App() {
             aria-current={activeTab === tab ? 'page' : undefined}
             className={`min-h-[52px] rounded-lg px-1 py-1 text-xs ${
               activeTab === tab
-                ? 'font-semibold text-[#1f6f5c]'
-                : 'text-[#6f6c64]'
+                ? 'font-semibold text-accent'
+                : 'text-secondary'
             }`}
             onClick={() => {
               setNotice(null)

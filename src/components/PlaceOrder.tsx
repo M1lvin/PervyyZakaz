@@ -82,17 +82,17 @@ export default function PlaceOrder({ onPublish }: PlaceOrderProps) {
 
   return (
     <form
-      className="mb-3 rounded-xl border border-[#e3e0d7] bg-white p-4"
+      className="card-background mb-3 rounded-xl border border-default p-4"
       noValidate
       onSubmit={submitOrder}
     >
       <h2 className="text-base font-semibold">Новый заказ</h2>
-      <p className="mt-1 text-[13px] text-[#6f6c64]">
+      <p className="text-secondary mt-1 text-[13px]">
         Опишите задачу понятно. Студенты увидят её в ленте.
       </p>
 
       <div className="mt-3">
-        <label htmlFor="order-business" className="mb-3 block text-sm text-[#6f6c64]">
+        <label htmlFor="order-business" className="text-secondary mb-3 block text-sm">
           Название бизнеса
           <input
             id="order-business"
@@ -103,16 +103,16 @@ export default function PlaceOrder({ onPublish }: PlaceOrderProps) {
             aria-describedby={errors.business ? 'order-business-error' : undefined}
             placeholder="Кафе, салон, магазин"
             onChange={(event) => update('business', event.target.value)}
-            className="mt-1.5 min-h-11 w-full rounded-[10px] border border-[#e3e0d7] bg-white px-3 py-2.5 text-[15px] text-[#1d1c19]"
+            className="field-control mt-1.5 min-h-11 w-full rounded-[10px] border px-3 py-2.5 text-[15px]"
           />
           {errors.business && (
-            <span id="order-business-error" className="mt-1 block text-sm text-[#a23b2c]">
+            <span id="order-business-error" className="text-error mt-1 block text-sm">
               {errors.business}
             </span>
           )}
         </label>
 
-        <label htmlFor="order-title" className="mb-3 block text-sm text-[#6f6c64]">
+        <label htmlFor="order-title" className="text-secondary mb-3 block text-sm">
           Задача
           <input
             id="order-title"
@@ -123,16 +123,16 @@ export default function PlaceOrder({ onPublish }: PlaceOrderProps) {
             aria-describedby={errors.title ? 'order-title-error' : undefined}
             placeholder="Например: страница с меню и ценами"
             onChange={(event) => update('title', event.target.value)}
-            className="mt-1.5 min-h-11 w-full rounded-[10px] border border-[#e3e0d7] bg-white px-3 py-2.5 text-[15px] text-[#1d1c19]"
+            className="field-control mt-1.5 min-h-11 w-full rounded-[10px] border px-3 py-2.5 text-[15px]"
           />
           {errors.title && (
-            <span id="order-title-error" className="mt-1 block text-sm text-[#a23b2c]">
+            <span id="order-title-error" className="text-error mt-1 block text-sm">
               {errors.title}
             </span>
           )}
         </label>
 
-        <label htmlFor="order-description" className="mb-3 block text-sm text-[#6f6c64]">
+        <label htmlFor="order-description" className="text-secondary mb-3 block text-sm">
           Что нужно сделать
           <textarea
             id="order-description"
@@ -141,12 +141,12 @@ export default function PlaceOrder({ onPublish }: PlaceOrderProps) {
             value={values.description}
             placeholder="Что есть, что нужно получить, к какому сроку"
             onChange={(event) => update('description', event.target.value)}
-            className="mt-1.5 min-h-[88px] w-full resize-y rounded-[10px] border border-[#e3e0d7] bg-white px-3 py-2.5 text-[15px] text-[#1d1c19]"
+            className="field-control mt-1.5 min-h-[88px] w-full resize-y rounded-[10px] border px-3 py-2.5 text-[15px]"
           />
         </label>
 
         <div className="grid grid-cols-2 gap-3">
-          <label htmlFor="order-budget" className="mb-3 block text-sm text-[#6f6c64]">
+          <label htmlFor="order-budget" className="text-secondary mb-3 block text-sm">
             Бюджет, сом
             <input
               id="order-budget"
@@ -159,15 +159,15 @@ export default function PlaceOrder({ onPublish }: PlaceOrderProps) {
               aria-describedby={errors.budget ? 'order-budget-error' : undefined}
               placeholder="1500"
               onChange={(event) => update('budget', event.target.value)}
-              className="mt-1.5 min-h-11 w-full rounded-[10px] border border-[#e3e0d7] bg-white px-3 py-2.5 text-[15px] text-[#1d1c19]"
+              className="field-control mt-1.5 min-h-11 w-full rounded-[10px] border px-3 py-2.5 text-[15px]"
             />
             {errors.budget && (
-              <span id="order-budget-error" className="mt-1 block text-sm text-[#a23b2c]">
+              <span id="order-budget-error" className="text-error mt-1 block text-sm">
                 {errors.budget}
               </span>
             )}
           </label>
-          <label htmlFor="order-days" className="mb-3 block text-sm text-[#6f6c64]">
+          <label htmlFor="order-days" className="text-secondary mb-3 block text-sm">
             Срок, дней
             <input
               id="order-days"
@@ -181,17 +181,17 @@ export default function PlaceOrder({ onPublish }: PlaceOrderProps) {
               aria-describedby={errors.days ? 'order-days-error' : undefined}
               placeholder="5"
               onChange={(event) => update('days', event.target.value)}
-              className="mt-1.5 min-h-11 w-full rounded-[10px] border border-[#e3e0d7] bg-white px-3 py-2.5 text-[15px] text-[#1d1c19]"
+              className="field-control mt-1.5 min-h-11 w-full rounded-[10px] border px-3 py-2.5 text-[15px]"
             />
             {errors.days && (
-              <span id="order-days-error" className="mt-1 block text-sm text-[#a23b2c]">
+              <span id="order-days-error" className="text-error mt-1 block text-sm">
                 {errors.days}
               </span>
             )}
           </label>
         </div>
 
-        <label htmlFor="order-skill" className="mb-3 block text-sm text-[#6f6c64]">
+        <label htmlFor="order-skill" className="text-secondary mb-3 block text-sm">
           Навык
           <select
             id="order-skill"
@@ -200,7 +200,7 @@ export default function PlaceOrder({ onPublish }: PlaceOrderProps) {
               const skill = skills.find((option) => option === event.target.value)
               if (skill) update('skill', skill)
             }}
-            className="mt-1.5 min-h-11 w-full rounded-[10px] border border-[#e3e0d7] bg-white px-3 py-2.5 text-[15px] text-[#1d1c19]"
+            className="field-control mt-1.5 min-h-11 w-full rounded-[10px] border px-3 py-2.5 text-[15px]"
           >
             {skills.map((skill) => (
               <option key={skill}>{skill}</option>
@@ -211,7 +211,7 @@ export default function PlaceOrder({ onPublish }: PlaceOrderProps) {
         <button
           type="submit"
           disabled={submitting}
-          className="button-primary sticky bottom-20 z-10 min-h-11 w-full rounded-[10px] border border-[#1f6f5c] bg-[#1f6f5c] px-4 py-2.5 text-white shadow-md"
+          className="button-primary sticky bottom-20 z-10 min-h-11 w-full rounded-[10px] px-4 py-2.5 shadow-md"
         >
           {submitting ? 'Публикуем…' : 'Опубликовать заказ'}
         </button>

@@ -83,7 +83,7 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
   return (
     <section aria-label="Лента заказов">
       {notice && (
-        <p role="status" className="mb-3 rounded-[10px] bg-[#e4f0eb] px-4 py-3 text-sm text-[#1f6f5c]">
+        <p role="status" className="feedback-success mb-3 rounded-[10px] px-4 py-3 text-sm">
           {notice}
         </p>
       )}
@@ -95,7 +95,7 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
           id="skill-filter"
           value={skillFilter}
           onChange={(event) => setSkillFilter(event.target.value)}
-          className="min-h-11 w-full max-w-60 rounded-[10px] border border-[#e3e0d7] bg-white px-3 py-2.5 text-[15px] text-[#1d1c19]"
+          className="field-control min-h-11 w-full max-w-60 rounded-[10px] border px-3 py-2.5 text-[15px]"
         >
           <option>Все</option>
           {skills.map((skill) => (
@@ -108,15 +108,15 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
         visibleOrders.map((order) => (
           <article
             key={order.id}
-            className="mb-3 rounded-xl border border-[#e3e0d7] bg-white p-4"
+            className="card-background mb-3 rounded-xl border border-default p-4"
           >
             <div className="flex items-start justify-between gap-3">
               <h2 className="text-base font-semibold">{order.title}</h2>
-              <span className="shrink-0 whitespace-nowrap font-semibold text-[#1f6f5c]">
+              <span className="text-accent shrink-0 whitespace-nowrap font-semibold">
                 {order.price.toLocaleString('ru-RU')} сом
               </span>
             </div>
-            <p className="mt-1 text-[13px] text-[#6f6c64]">
+            <p className="text-secondary mt-1 text-[13px]">
               {order.business} · {order.days} дн. · {order.skill}
             </p>
             <p className="mb-3.5 mt-2.5 text-[15px]">{order.description}</p>
@@ -128,7 +128,7 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
                 onSubmit={(event) => submitResponse(event, order)}
               >
                 <div className="grid grid-cols-2 gap-3">
-                  <label className="mb-3 block text-sm text-[#6f6c64]">
+                  <label className="text-secondary mb-3 block text-sm">
                     Ваша цена, сом
                     <input
                       type="number"
@@ -142,15 +142,15 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
                       onChange={(event) =>
                         setDraft((current) => ({ ...current, price: event.target.value }))
                       }
-                      className="mt-1.5 min-h-11 w-full rounded-[10px] border border-[#e3e0d7] bg-white px-3 py-2.5 text-[15px] text-[#1d1c19]"
+                      className="field-control mt-1.5 min-h-11 w-full rounded-[10px] border px-3 py-2.5 text-[15px]"
                     />
                     {errors.price && (
-                      <span id={`price-error-${order.id}`} className="mt-1 block text-sm text-[#a23b2c]">
+                      <span id={`price-error-${order.id}`} className="text-error mt-1 block text-sm">
                         {errors.price}
                       </span>
                     )}
                   </label>
-                  <label className="mb-3 block text-sm text-[#6f6c64]">
+                  <label className="text-secondary mb-3 block text-sm">
                     Срок, дней
                     <input
                       type="number"
@@ -164,16 +164,16 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
                       onChange={(event) =>
                         setDraft((current) => ({ ...current, days: event.target.value }))
                       }
-                      className="mt-1.5 min-h-11 w-full rounded-[10px] border border-[#e3e0d7] bg-white px-3 py-2.5 text-[15px] text-[#1d1c19]"
+                      className="field-control mt-1.5 min-h-11 w-full rounded-[10px] border px-3 py-2.5 text-[15px]"
                     />
                     {errors.days && (
-                      <span id={`days-error-${order.id}`} className="mt-1 block text-sm text-[#a23b2c]">
+                      <span id={`days-error-${order.id}`} className="text-error mt-1 block text-sm">
                         {errors.days}
                       </span>
                     )}
                   </label>
                 </div>
-                <label className="mb-3 block text-sm text-[#6f6c64]">
+                <label className="text-secondary mb-3 block text-sm">
                   Сообщение заказчику
                   <textarea
                     rows={3}
@@ -182,11 +182,11 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
                     onChange={(event) =>
                       setDraft((current) => ({ ...current, message: event.target.value }))
                     }
-                    className="mt-1.5 min-h-[88px] w-full resize-y rounded-[10px] border border-[#e3e0d7] bg-white px-3 py-2.5 text-[15px] text-[#1d1c19]"
+                    className="field-control mt-1.5 min-h-[88px] w-full resize-y rounded-[10px] border px-3 py-2.5 text-[15px]"
                   />
                 </label>
                 {errors.form && (
-                  <p role="alert" className="mb-2 text-sm text-[#a23b2c]">
+                  <p role="alert" className="text-error mb-2 text-sm">
                     {errors.form}
                   </p>
                 )}
@@ -194,7 +194,7 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="button-primary min-h-11 rounded-[10px] border border-[#1f6f5c] bg-[#1f6f5c] px-4 py-2.5 text-white"
+                    className="button-primary min-h-11 rounded-[10px] px-4 py-2.5"
                   >
                     {submitting ? 'Отправляем…' : 'Отправить отклик'}
                   </button>
@@ -202,7 +202,7 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
                     type="button"
                     disabled={submitting}
                     onClick={closeResponseForm}
-                    className="button-secondary min-h-11 rounded-[10px] border border-[#e3e0d7] bg-white px-4 py-2.5 text-[#1d1c19]"
+                    className="button-secondary min-h-11 rounded-[10px] px-4 py-2.5"
                   >
                     Отмена
                   </button>
@@ -210,14 +210,14 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
               </form>
             ) : (
               order.createdBy === userId ? (
-                <p className="text-[13px] text-[#6f6c64]">
+                <p className="text-secondary text-[13px]">
                   Это ваш заказ. Студенты увидят его здесь.
                 </p>
               ) : (
                 <button
                   type="button"
                   onClick={() => openResponseForm(order)}
-                  className="button-primary min-h-11 rounded-[10px] border border-[#1f6f5c] bg-[#1f6f5c] px-4 py-2.5 text-white"
+                  className="button-primary min-h-11 rounded-[10px] px-4 py-2.5"
                 >
                   Откликнуться
                 </button>
@@ -226,8 +226,8 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
           </article>
         ))
       ) : (
-        <div className="px-3 py-10 text-center text-[#6f6c64]">
-          <h2 className="mb-1 text-base font-semibold text-[#1d1c19]">Пока нет заказов</h2>
+        <div className="text-secondary px-3 py-10 text-center">
+          <h2 className="text-primary mb-1 text-base font-semibold">Пока нет заказов</h2>
           <p>Попробуйте выбрать другой навык.</p>
         </div>
       )}

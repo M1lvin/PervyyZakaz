@@ -187,12 +187,12 @@ export default function Auth({
   if (recoveryMode) {
     return (
       <main className="flex flex-1 items-center justify-center px-4 py-8">
-        <section className="w-full max-w-[420px] rounded-xl border border-[#e3e0d7] bg-white p-5">
+        <section className="card-background w-full max-w-[420px] rounded-xl border border-default p-5">
           <h1 className="text-[22px] font-semibold tracking-tight">Новый пароль</h1>
-          <p className="mt-1 text-sm text-[#6f6c64]">Первый заказ</p>
+          <p className="text-secondary mt-1 text-sm">Первый заказ</p>
 
           <form className="mt-5" noValidate onSubmit={submitNewPassword}>
-            <label htmlFor="auth-password" className="mb-3 block text-sm text-[#6f6c64]">
+            <label htmlFor="auth-password" className="text-secondary mb-3 block text-sm">
               Пароль
               <span className="relative mt-1.5 block">
                 <input
@@ -201,13 +201,13 @@ export default function Auth({
                   autoComplete="new-password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
-                  className="min-h-11 w-full rounded-[10px] border border-[#e3e0d7] bg-white px-3 py-2.5 pr-12 text-[15px] text-[#1d1c19]"
+                  className="field-control min-h-11 w-full rounded-[10px] border px-3 py-2.5 pr-12 text-[15px]"
                 />
                 <button
                   type="button"
                   aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
                   onClick={() => setShowPassword((visible) => !visible)}
-                  className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-[#6f6c64]"
+                  className="text-secondary absolute inset-y-0 right-0 flex w-11 items-center justify-center"
                 >
                   <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
                     {showPassword ? (
@@ -226,14 +226,14 @@ export default function Auth({
               </span>
             </label>
             {error && (
-              <p role="alert" className="mb-3 text-sm text-[#a23b2c]">
+              <p role="alert" className="text-error mb-3 text-sm">
                 {error}
               </p>
             )}
             <button
               type="submit"
               disabled={loading}
-              className="button-primary min-h-11 w-full rounded-[10px] border border-[#1f6f5c] bg-[#1f6f5c] px-4 py-2.5 text-white disabled:opacity-60"
+              className="button-primary min-h-11 w-full rounded-[10px] px-4 py-2.5 disabled:opacity-60"
             >
               {loading ? 'Подождите...' : 'Сохранить пароль'}
             </button>
@@ -245,14 +245,14 @@ export default function Auth({
 
   return (
     <main className="flex flex-1 items-center justify-center px-4 py-8">
-      <section className="w-full max-w-[420px] rounded-xl border border-[#e3e0d7] bg-white p-5">
+      <section className="card-background w-full max-w-[420px] rounded-xl border border-default p-5">
         <h1 className="text-[22px] font-semibold tracking-tight">
           {mode === 'signin' ? 'Вход' : 'Регистрация'}
         </h1>
-        <p className="mt-1 text-sm text-[#6f6c64]">Первый заказ</p>
+        <p className="text-secondary mt-1 text-sm">Первый заказ</p>
 
         <form className="mt-5" noValidate onSubmit={submit}>
-          <label htmlFor="auth-email" className="mb-3 block text-sm text-[#6f6c64]">
+          <label htmlFor="auth-email" className="text-secondary mb-3 block text-sm">
             Email
             <input
               id="auth-email"
@@ -266,15 +266,15 @@ export default function Auth({
                 setEmail(event.target.value)
                 setEmailError('')
               }}
-              className="mt-1.5 min-h-11 w-full rounded-[10px] border border-[#e3e0d7] bg-white px-3 py-2.5 text-[15px] text-[#1d1c19]"
+              className="field-control mt-1.5 min-h-11 w-full rounded-[10px] border px-3 py-2.5 text-[15px]"
             />
             {emailError && (
-              <span id="auth-email-error" className="mt-1 block text-sm text-[#a23b2c]">
+              <span id="auth-email-error" className="text-error mt-1 block text-sm">
                 {emailError}
               </span>
             )}
           </label>
-          <label htmlFor="auth-password" className="mb-3 block text-sm text-[#6f6c64]">
+          <label htmlFor="auth-password" className="text-secondary mb-3 block text-sm">
             Пароль
             <input
               id="auth-password"
@@ -282,17 +282,17 @@ export default function Auth({
               autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="mt-1.5 min-h-11 w-full rounded-[10px] border border-[#e3e0d7] bg-white px-3 py-2.5 text-[15px] text-[#1d1c19]"
+              className="field-control mt-1.5 min-h-11 w-full rounded-[10px] border px-3 py-2.5 text-[15px]"
             />
           </label>
 
           {error && (
-            <p role="alert" className="mb-3 text-sm text-[#a23b2c]">
+            <p role="alert" className="text-error mb-3 text-sm">
               {error}
             </p>
           )}
           {message && (
-            <p role="status" className="mb-3 text-sm text-[#1f6f5c]">
+            <p role="status" className="text-accent mb-3 text-sm">
               {message}
             </p>
           )}
@@ -300,7 +300,7 @@ export default function Auth({
           <button
             type="submit"
             disabled={loading}
-            className="button-primary min-h-11 w-full rounded-[10px] border border-[#1f6f5c] bg-[#1f6f5c] px-4 py-2.5 text-white disabled:opacity-60"
+            className="button-primary min-h-11 w-full rounded-[10px] px-4 py-2.5 disabled:opacity-60"
           >
             {loading ? 'Подождите...' : mode === 'signin' ? 'Войти' : 'Зарегистрироваться'}
           </button>
@@ -309,23 +309,23 @@ export default function Auth({
               type="button"
               disabled={loading || googleLoading}
               onClick={sendPasswordReset}
-              className="mt-3 text-sm font-semibold text-[#1f6f5c] underline disabled:opacity-60"
+              className="text-accent mt-3 text-sm font-semibold underline disabled:opacity-60"
             >
               Забыли пароль?
             </button>
           )}
         </form>
 
-        <div className="my-4 flex items-center gap-3 text-sm text-[#6f6c64]">
-          <span className="h-px flex-1 bg-[#e3e0d7]" />
+        <div className="text-secondary my-4 flex items-center gap-3 text-sm">
+          <span className="bg-border h-px flex-1" />
           <span>или</span>
-          <span className="h-px flex-1 bg-[#e3e0d7]" />
+          <span className="bg-border h-px flex-1" />
         </div>
         <button
           type="button"
           disabled={loading || googleLoading}
           onClick={signInWithGoogle}
-          className="button-secondary flex min-h-11 w-full items-center justify-center gap-2 rounded-[10px] border border-[#e3e0d7] bg-white px-4 py-2.5 text-[#1d1c19] disabled:opacity-60"
+          className="button-secondary flex min-h-11 w-full items-center justify-center gap-2 rounded-[10px] px-4 py-2.5 disabled:opacity-60"
         >
           <svg aria-hidden="true" viewBox="0 0 48 48" className="h-5 w-5">
             <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3A12 12 0 1 1 32 15.1l5.7-5.7A20 20 0 1 0 44 24c0-1.2-.1-2.4-.4-3.5Z" />
@@ -336,12 +336,12 @@ export default function Auth({
           {googleLoading ? 'Подождите...' : 'Войти через Google'}
         </button>
 
-        <p className="mt-4 text-center text-sm text-[#6f6c64]">
+        <p className="text-secondary mt-4 text-center text-sm">
           {mode === 'signin' ? 'Нет аккаунта?' : 'Уже есть аккаунт?'}{' '}
           <button
             type="button"
             onClick={() => changeMode(mode === 'signin' ? 'signup' : 'signin')}
-            className="font-semibold text-[#1f6f5c] underline"
+            className="text-accent font-semibold underline"
           >
             {mode === 'signin' ? 'Зарегистрироваться' : 'Войти'}
           </button>

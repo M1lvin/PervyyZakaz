@@ -1,48 +1,174 @@
 @import "tailwindcss";
 
-:root {
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
+:root,
+:root[data-theme="light"],
+:root[data-theme="system"] {
   color-scheme: light;
-  background: #f6f5f1;
+  --page-bg: #f6f5f1;
+  --card-bg: #ffffff;
+  --text-primary: #1d1c19;
+  --text-secondary: #6f6c64;
+  --border-color: #e3e0d7;
+  --accent: #1f6f5c;
+  --on-accent: #ffffff;
+  --error: #a23b2c;
+  --error-bg: #f8e9e6;
+  --accent-subtle: #e4f0eb;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page-bg: #14140f;
+  --card-bg: #1e1e18;
+  --text-primary: #f1f0e9;
+  --text-secondary: #b3b0a5;
+  --border-color: #414137;
+  --accent: #7cc9b0;
+  --on-accent: #10261f;
+  --error: #ff9b8e;
+  --error-bg: #3a2421;
+  --accent-subtle: #263b33;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] {
+    color-scheme: dark;
+    --page-bg: #14140f;
+    --card-bg: #1e1e18;
+    --text-primary: #f1f0e9;
+    --text-secondary: #b3b0a5;
+    --border-color: #414137;
+    --accent: #7cc9b0;
+    --on-accent: #10261f;
+    --error: #ff9b8e;
+    --error-bg: #3a2421;
+    --accent-subtle: #263b33;
+  }
 }
 
 * {
   box-sizing: border-box;
 }
 
+html,
+body {
+  background-color: var(--page-bg);
+  color: var(--text-primary);
+}
+
 body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
 }
 
 button {
   border: 0;
   background: transparent;
+  color: inherit;
   font: inherit;
   cursor: pointer;
 }
 
+.page-background {
+  background-color: var(--page-bg);
+  color: var(--text-primary);
+}
+
+.card-background {
+  background-color: var(--card-bg);
+}
+
+.text-primary {
+  color: var(--text-primary);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.text-accent {
+  color: var(--accent);
+}
+
+.bg-border {
+  background-color: var(--border-color);
+}
+
+.border-accent {
+  border-color: var(--accent);
+}
+
+.text-error {
+  color: var(--error);
+}
+
+.border-default {
+  border-color: var(--border-color);
+}
+
+.field-control {
+  border-color: var(--border-color);
+  background-color: var(--card-bg);
+  color: var(--text-primary);
+}
+
+.feedback-error {
+  background-color: var(--error-bg);
+  color: var(--error);
+}
+
+.feedback-success {
+  background-color: var(--accent-subtle);
+  color: var(--accent);
+}
+
+.control-accent {
+  accent-color: var(--accent);
+}
+
+.theme-settings {
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+}
+
+.profile-stamp-shadow {
+  box-shadow: inset 0 0 0 4px var(--card-bg), inset 0 0 0 5px currentColor;
+}
+
+.theme-option {
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background-color: var(--card-bg);
+  color: var(--text-primary);
+}
+
+.theme-option.is-selected {
+  border-color: var(--accent);
+  background-color: var(--accent-subtle);
+}
+
 .button-primary {
   min-height: 44px !important;
-  border: 1px solid #1f6f5c !important;
+  border: 1px solid var(--accent) !important;
   border-radius: 10px !important;
-  background-color: #1f6f5c !important;
-  color: #fff !important;
+  background-color: var(--accent) !important;
+  color: var(--on-accent) !important;
 }
 
 .button-secondary {
   min-height: 44px !important;
-  border: 1px solid #e3e0d7 !important;
+  border: 1px solid var(--border-color) !important;
   border-radius: 10px !important;
   background-color: transparent !important;
-  color: #1d1c19 !important;
+  color: var(--text-primary) !important;
 }
 
 button:focus-visible {
-  outline: 2px solid #1f6f5c;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -52,9 +178,15 @@ select {
   font: inherit;
 }
 
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.8;
+}
+
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 2px solid #1f6f5c;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }

@@ -11,6 +11,8 @@ interface ProfileProps {
   profile: UserProfile
   orders: MyOrder[]
   userId: string
+  theme: 'light' | 'dark' | 'system'
+  onThemeChange: (theme: 'light' | 'dark' | 'system') => void
   onSave: (profile: UserProfile) => Promise<boolean>
   onSignOut: () => void
 }
@@ -19,12 +21,12 @@ export function FirstOrderStamp({ earned, small = false }: { earned: boolean; sm
   return (
     <div
       aria-label={earned ? 'Печать «Первый заказ» получена' : 'Печать ещё не получена'}
-      className={`flex shrink-0 rotate-[-10deg] flex-col items-center justify-center rounded-full border-2 leading-none shadow-[inset_0_0_0_4px_white,inset_0_0_0_5px_currentColor] ${
+      className={`profile-stamp-shadow flex shrink-0 rotate-[-10deg] flex-col items-center justify-center rounded-full border-2 leading-none ${
         small ? 'h-[54px] w-[54px]' : 'h-[76px] w-[76px]'
       } ${
         earned
-          ? 'border-[#1f6f5c] text-[#1f6f5c]'
-          : 'border-[#e3e0d7] text-[#6f6c64]'
+          ? 'border-accent text-accent'
+          : 'border-default text-secondary'
       }`}
     >
       <span className={`font-bold tracking-[0.08em] ${small ? 'text-[10px]' : 'text-[13px]'}`}>
@@ -35,7 +37,15 @@ export function FirstOrderStamp({ earned, small = false }: { earned: boolean; sm
   )
 }
 
-export default function Profile({ profile, orders, userId, onSave, onSignOut }: ProfileProps) {
+export default function Profile({
+  profile,
+  orders,
+  userId,
+  theme,
+  onThemeChange,
+  onSave,
+  onSignOut,
+}: ProfileProps) {
   const [name, setName] = useState(profile.name)
   const [contact, setContact] = useState(profile.contact)
   const [selectedSkills, setSelectedSkills] = useState<Skill[]>(profile.skills)
@@ -87,11 +97,11 @@ export default function Profile({ profile, orders, userId, onSave, onSignOut }: 
   return (
     <section aria-label="Профиль">
       <form
-        className="mb-3 rounded-xl border border-[#e3e0d7] bg-white p-4"
+        className="card-background mb-3 rounded-xl border border-default p-4"
         noValidate
         onSubmit={submitProfile}
       >
-        <label htmlFor="profile-name" className="mb-3 block text-sm text-[#6f6c64]">
+        <label htmlFor="profile-name" className="mb-3 block text-sm text-secondary">
           Имя
           <input
             id="profile-name"
@@ -106,16 +116,16 @@ export default function Profile({ profile, orders, userId, onSave, onSignOut }: 
               setNameError('')
               setSaved(false)
             }}
-            className="mt-1.5 min-h-11 w-full rounded-[10px] border border-[#e3e0d7] bg-white px-3 py-2.5 text-[15px] text-[#1d1c19]"
+            className="field-control mt-1.5 min-h-11 w-full rounded-[10px] border px-3 py-2.5 text-[15px]"
           />
           {nameError && (
-            <span id="profile-name-error" className="mt-1 block text-sm text-[#a23b2c]">
+            <span id="profile-name-error" className="text-error mt-1 block text-sm">
               {nameError}
             </span>
           )}
         </label>
 
-        <label htmlFor="profile-contact" className="mb-3 block text-sm text-[#6f6c64]">
+        <label htmlFor="profile-contact" className="mb-3 block text-sm text-secondary">
           Контакт для заказчика
           <input
             id="profile-contact"
@@ -127,22 +137,20 @@ export default function Profile({ profile, orders, userId, onSave, onSignOut }: 
               setContact(event.target.value)
               setSaved(false)
             }}
-            className="mt-1.5 min-h-11 w-full rounded-[10px] border border-[#e3e0d7] bg-white px-3 py-2.5 text-[15px] text-[#1d1c19]"
+            className="field-control mt-1.5 min-h-11 w-full rounded-[10px] border px-3 py-2.5 text-[15px]"
           />
         </label>
 
-        <fieldset className="mb-3 rounded-[10px] border border-[#e3e0d7] p-3">
-          <legend className="px-1 text-sm text-[#6f6c64]">Навыки</legend>
+        <fieldset className="theme-settings mb-3 rounded-[10px] border p-3">
+          <legend className="px-1 text-sm">Навыки</legend>
           <div className="flex flex-wrap gap-2">
             {skills.map((skill) => {
               const checked = selectedSkills.includes(skill)
               return (
                 <label
                   key={skill}
-                  className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm text-[#1d1c19] ${
-                    checked
-                      ? 'border-[#1f6f5c] bg-[#e4f0eb]'
-                      : 'border-[#e3e0d7] bg-white'
+                  className={`theme-option inline-flex cursor-pointer items-center gap-1.5 px-3 py-1.5 text-sm ${
+                    checked ? 'is-selected' : ''
                   }`}
                 >
                   <input
@@ -153,7 +161,7 @@ export default function Profile({ profile, orders, userId, onSave, onSignOut }: 
                       toggleSkill(skill)
                       setSaved(false)
                     }}
-                    className="h-4 w-4 accent-[#1f6f5c]"
+                    className="control-accent h-4 w-4"
                   />
                   <span>{skill}</span>
                 </label>
@@ -165,39 +173,61 @@ export default function Profile({ profile, orders, userId, onSave, onSignOut }: 
         <button
           type="submit"
           disabled={saving}
-          className="button-primary min-h-11 rounded-[10px] border border-[#1f6f5c] bg-[#1f6f5c] px-4 py-2.5 text-white"
+          className="button-primary min-h-11 rounded-[10px] px-4 py-2.5"
         >
           Сохранить
         </button>
         {saved && (
-          <p role="status" className="mt-2 text-sm text-[#1f6f5c]">
+          <p role="status" className="text-accent mt-2 text-sm">
             Профиль сохранён
           </p>
         )}
       </form>
 
-      <div className="rounded-xl border border-[#e3e0d7] bg-white p-4">
+      <div className="card-background rounded-xl border border-default p-4">
         <div className="flex items-center gap-4">
           <FirstOrderStamp earned={earned} />
           <div>
             <p className="m-0 text-[22px] font-semibold">
               {totalEarned.toLocaleString('ru-RU')} сом
             </p>
-            <p className="mt-1 text-[13px] text-[#6f6c64]">
+            <p className="mt-1 text-[13px] text-secondary">
               {paidOrders.length} оплаченных заказов
             </p>
           </div>
         </div>
-        <p className="mt-3.5 text-[13px] text-[#6f6c64]">
+        <p className="mt-3.5 text-[13px] text-secondary">
           {earned
             ? 'Печать «Первый заказ» получена. Она будет стоять на всех ваших работах.'
             : 'Печать появится после первого оплаченного заказа'}
         </p>
       </div>
+      <fieldset className="theme-settings mt-3 rounded-xl border p-4">
+        <legend className="px-1 text-sm">Настройки</legend>
+        <div className="flex flex-col gap-2">
+          {([
+            ['light', 'Светлая'],
+            ['dark', 'Тёмная'],
+            ['system', 'Как в системе'],
+          ] as const).map(([value, label]) => (
+            <label key={value} className="flex cursor-pointer items-center gap-2 text-sm">
+              <input
+                type="radio"
+                name="theme"
+                value={value}
+                checked={theme === value}
+                onChange={() => onThemeChange(value)}
+                className="control-accent h-4 w-4"
+              />
+              {label}
+            </label>
+          ))}
+        </div>
+      </fieldset>
       <button
         type="button"
         onClick={onSignOut}
-        className="button-secondary mt-3 min-h-11 w-full rounded-[10px] border border-[#e3e0d7] bg-white px-4 py-2.5 text-sm text-[#1d1c19]"
+        className="button-secondary mt-3 min-h-11 w-full rounded-[10px] px-4 py-2.5 text-sm"
       >
         Выйти
       </button>
