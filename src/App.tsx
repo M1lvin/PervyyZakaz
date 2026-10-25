@@ -6,6 +6,8 @@ import Feed from './components/Feed'
 import MyOrders from './components/MyOrders'
 import PlaceOrder from './components/PlaceOrder'
 import Profile, { FirstOrderStamp, type UserProfile } from './components/Profile'
+import Button from './components/ui/Button'
+import Card from './components/ui/Card'
 import { supabase } from './lib/supabase'
 import type { MyOrder, Order, OrderStatus } from './data/orders'
 import {
@@ -364,13 +366,14 @@ export default function App() {
         ) : activeTab === 'Профиль' && profilePage === 'settings' ? (
           <section aria-label="Настройки">
             <div className="mb-4 flex items-center gap-3">
-              <button
+              <Button
                 type="button"
                 onClick={() => setProfilePage('profile')}
-                className="button-secondary min-h-11 rounded-[10px] px-4 py-2.5 text-sm"
+                variant="secondary"
+                className="text-sm"
               >
                 ← Назад
-              </button>
+              </Button>
               <h2 className="text-[22px] font-semibold tracking-tight">Настройки</h2>
             </div>
             {[
@@ -408,13 +411,14 @@ export default function App() {
                 content: <p className="text-secondary text-sm">Скоро</p>,
               },
             ].map((section) => (
-              <section
+              <Card
+                as="section"
                 key={section.title}
-                className="card-background mb-3 rounded-xl border border-default p-4"
+                className="mb-3 p-4"
               >
                 <h3 className="mb-3 text-base font-semibold">{section.title}</h3>
                 {section.content}
-              </section>
+              </Card>
             ))}
           </section>
         ) : activeTab === 'Профиль' ? (

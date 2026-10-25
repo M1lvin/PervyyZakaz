@@ -1,4 +1,7 @@
 import type { MyOrder, OrderStatus } from '../data/orders'
+import Badge from './ui/Badge'
+import Button from './ui/Button'
+import Card from './ui/Card'
 
 interface MyOrdersProps {
   orders: MyOrder[]
@@ -20,13 +23,13 @@ export default function MyOrders({ orders, userId, onStatusChange }: MyOrdersPro
 
   if (myOrders.length === 0) {
     return (
-      <div className="text-secondary px-3 py-10 text-center">
+      <Card className="text-secondary px-3 py-10 text-center">
         <h2 className="text-primary mb-1 text-base font-semibold">Здесь пока пусто</h2>
         <p>
           Откликнитесь на заказ в ленте, и он появится здесь. Свою задачу можно разместить во
           вкладке «Разместить».
         </p>
-      </div>
+      </Card>
     )
   }
 
@@ -39,9 +42,10 @@ export default function MyOrders({ orders, userId, onStatusChange }: MyOrdersPro
         const days = takenByMe ? order.responseDays ?? order.days : order.days
 
         return (
-          <article
+          <Card
+            as="article"
             key={order.id}
-            className="card-background mb-3 rounded-xl border border-default p-4"
+            className="mb-3 p-4"
           >
             <div className="flex items-start justify-between gap-3">
               <h2 className="text-base font-semibold">{order.title}</h2>
@@ -52,32 +56,32 @@ export default function MyOrders({ orders, userId, onStatusChange }: MyOrdersPro
             <p className="text-secondary mt-1 text-[13px]">
               {order.business} · {days} дн.
             </p>
-            <p className="text-accent mt-2.5 text-sm font-semibold">
-              {statusLabels[order.status]}
+            <p className="mt-2.5">
+              <Badge status={order.status}>{statusLabels[order.status]}</Badge>
             </p>
             {takenByMe && order.status === 'in_progress' && (
               <div className="mt-3">
-                <button
+                <Button
                   type="button"
                   onClick={() => onStatusChange(order.id, 'done')}
-                  className="button-primary min-h-11 rounded-[10px] px-4 py-2.5"
+                  variant="primary"
                 >
                   Отметить сданным
-                </button>
+                </Button>
               </div>
             )}
             {createdByMe && order.status === 'done' && (
               <div className="mt-3">
-                <button
+                <Button
                   type="button"
                   onClick={() => onStatusChange(order.id, 'paid')}
-                  className="button-primary min-h-11 rounded-[10px] px-4 py-2.5"
+                  variant="primary"
                 >
                   Оплату получил
-                </button>
+                </Button>
               </div>
             )}
-          </article>
+          </Card>
         )
       })}
     </section>

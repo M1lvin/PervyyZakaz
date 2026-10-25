@@ -2,6 +2,7 @@ import type { ElementType, HTMLAttributes } from 'react'
 
 interface CardProps extends HTMLAttributes<HTMLElement> {
   as?: ElementType
+  noValidate?: boolean
 }
 
 export default function Card({

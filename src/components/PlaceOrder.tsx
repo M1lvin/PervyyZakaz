@@ -1,5 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { skills, type Order, type Skill } from '../data/orders'
+import Button from './ui/Button'
+import Card from './ui/Card'
+import Input from './ui/Input'
 
 interface PlaceOrderProps {
   onPublish: (order: Order) => Promise<boolean>
@@ -35,7 +38,7 @@ export default function PlaceOrder({ onPublish }: PlaceOrderProps) {
   const [errors, setErrors] = useState<FormErrors>({})
   const [submitting, setSubmitting] = useState(false)
 
-  async function submitOrder(event: FormEvent<HTMLFormElement>) {
+  async function submitOrder(event: FormEvent<HTMLElement>) {
     event.preventDefault()
 
     const business = values.business.trim()
@@ -81,56 +84,36 @@ export default function PlaceOrder({ onPublish }: PlaceOrderProps) {
   }
 
   return (
-    <form
-      className="card-background mb-3 rounded-xl border border-default p-4"
-      noValidate
-      onSubmit={submitOrder}
-    >
+    <Card as="form" className="mb-3 p-4" noValidate onSubmit={submitOrder}>
       <h2 className="text-base font-semibold">Новый заказ</h2>
       <p className="text-secondary mt-1 text-[13px]">
         Опишите задачу понятно. Студенты увидят её в ленте.
       </p>
 
       <div className="mt-3">
-        <label htmlFor="order-business" className="text-secondary mb-3 block text-sm">
-          Название бизнеса
-          <input
-            id="order-business"
-            type="text"
-            maxLength={60}
-            value={values.business}
-            aria-invalid={Boolean(errors.business)}
-            aria-describedby={errors.business ? 'order-business-error' : undefined}
-            placeholder="Кафе, салон, магазин"
-            onChange={(event) => update('business', event.target.value)}
-            className="field-control mt-1.5 min-h-11 w-full rounded-[10px] border px-3 py-2.5 text-[15px]"
-          />
-          {errors.business && (
-            <span id="order-business-error" className="text-error mt-1 block text-sm">
-              {errors.business}
-            </span>
-          )}
-        </label>
+        <Input
+          id="order-business"
+          label="Название бизнеса"
+          type="text"
+          maxLength={60}
+          value={values.business}
+          error={errors.business}
+          placeholder="Кафе, салон, магазин"
+          onChange={(event) => update('business', event.target.value)}
+          className="mb-3"
+        />
 
-        <label htmlFor="order-title" className="text-secondary mb-3 block text-sm">
-          Задача
-          <input
-            id="order-title"
-            type="text"
-            maxLength={80}
-            value={values.title}
-            aria-invalid={Boolean(errors.title)}
-            aria-describedby={errors.title ? 'order-title-error' : undefined}
-            placeholder="Например: страница с меню и ценами"
-            onChange={(event) => update('title', event.target.value)}
-            className="field-control mt-1.5 min-h-11 w-full rounded-[10px] border px-3 py-2.5 text-[15px]"
-          />
-          {errors.title && (
-            <span id="order-title-error" className="text-error mt-1 block text-sm">
-              {errors.title}
-            </span>
-          )}
-        </label>
+        <Input
+          id="order-title"
+          label="Задача"
+          type="text"
+          maxLength={80}
+          value={values.title}
+          error={errors.title}
+          placeholder="Например: страница с меню и ценами"
+          onChange={(event) => update('title', event.target.value)}
+          className="mb-3"
+        />
 
         <label htmlFor="order-description" className="text-secondary mb-3 block text-sm">
           Что нужно сделать
@@ -141,54 +124,36 @@ export default function PlaceOrder({ onPublish }: PlaceOrderProps) {
             value={values.description}
             placeholder="Что есть, что нужно получить, к какому сроку"
             onChange={(event) => update('description', event.target.value)}
-            className="field-control mt-1.5 min-h-[88px] w-full resize-y rounded-[10px] border px-3 py-2.5 text-[15px]"
+            className="ui-input mt-1.5 min-h-[88px] w-full resize-y text-[15px]"
           />
         </label>
 
         <div className="grid grid-cols-2 gap-3">
-          <label htmlFor="order-budget" className="text-secondary mb-3 block text-sm">
-            Бюджет, сом
-            <input
-              id="order-budget"
-              type="number"
-              min="100"
-              max="500000"
-              inputMode="numeric"
-              value={values.budget}
-              aria-invalid={Boolean(errors.budget)}
-              aria-describedby={errors.budget ? 'order-budget-error' : undefined}
-              placeholder="1500"
-              onChange={(event) => update('budget', event.target.value)}
-              className="field-control mt-1.5 min-h-11 w-full rounded-[10px] border px-3 py-2.5 text-[15px]"
-            />
-            {errors.budget && (
-              <span id="order-budget-error" className="text-error mt-1 block text-sm">
-                {errors.budget}
-              </span>
-            )}
-          </label>
-          <label htmlFor="order-days" className="text-secondary mb-3 block text-sm">
-            Срок, дней
-            <input
-              id="order-days"
-              type="number"
-              min="1"
-              max="60"
-              step="1"
-              inputMode="numeric"
-              value={values.days}
-              aria-invalid={Boolean(errors.days)}
-              aria-describedby={errors.days ? 'order-days-error' : undefined}
-              placeholder="5"
-              onChange={(event) => update('days', event.target.value)}
-              className="field-control mt-1.5 min-h-11 w-full rounded-[10px] border px-3 py-2.5 text-[15px]"
-            />
-            {errors.days && (
-              <span id="order-days-error" className="text-error mt-1 block text-sm">
-                {errors.days}
-              </span>
-            )}
-          </label>
+          <Input
+            id="order-budget"
+            label="Бюджет, сом"
+            type="number"
+            min="100"
+            max="500000"
+            inputMode="numeric"
+            value={values.budget}
+            error={errors.budget}
+            placeholder="1500"
+            onChange={(event) => update('budget', event.target.value)}
+          />
+          <Input
+            id="order-days"
+            label="Срок, дней"
+            type="number"
+            min="1"
+            max="60"
+            step="1"
+            inputMode="numeric"
+            value={values.days}
+            error={errors.days}
+            placeholder="5"
+            onChange={(event) => update('days', event.target.value)}
+          />
         </div>
 
         <label htmlFor="order-skill" className="text-secondary mb-3 block text-sm">
@@ -200,7 +165,7 @@ export default function PlaceOrder({ onPublish }: PlaceOrderProps) {
               const skill = skills.find((option) => option === event.target.value)
               if (skill) update('skill', skill)
             }}
-            className="field-control mt-1.5 min-h-11 w-full rounded-[10px] border px-3 py-2.5 text-[15px]"
+            className="ui-input mt-1.5 w-full"
           >
             {skills.map((skill) => (
               <option key={skill}>{skill}</option>
@@ -208,14 +173,15 @@ export default function PlaceOrder({ onPublish }: PlaceOrderProps) {
           </select>
         </label>
 
-        <button
+        <Button
           type="submit"
           disabled={submitting}
-          className="button-primary sticky bottom-20 z-10 min-h-11 w-full rounded-[10px] px-4 py-2.5 shadow-md"
+          variant="primary"
+          className="sticky bottom-20 z-10 w-full shadow-md"
         >
           {submitting ? 'Публикуем…' : 'Опубликовать заказ'}
-        </button>
+        </Button>
       </div>
-    </form>
+    </Card>
   )
 }

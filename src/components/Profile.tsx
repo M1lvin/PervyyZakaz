@@ -1,6 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { skills, type MyOrder, type Skill } from '../data/orders'
+import Card from './ui/Card'
 import Button from './ui/Button'
+import Input from './ui/Input'
 
 export interface UserProfile {
   name: string
@@ -67,7 +69,7 @@ export default function Profile({
   )
   const earned = paidOrders.length > 0
 
-  async function submitProfile(event: FormEvent<HTMLFormElement>) {
+  async function submitProfile(event: FormEvent<HTMLElement>) {
     event.preventDefault()
     const trimmedName = name.trim()
     if (trimmedName.length < 2) {
@@ -95,50 +97,36 @@ export default function Profile({
 
   return (
     <section aria-label="Профиль">
-      <form
-        className="card-background mb-3 rounded-xl border border-default p-4"
-        noValidate
-        onSubmit={submitProfile}
-      >
-        <label htmlFor="profile-name" className="mb-3 block text-sm text-secondary">
-          Имя
-          <input
-            id="profile-name"
-            type="text"
-            maxLength={40}
-            value={name}
-            aria-invalid={Boolean(nameError)}
-            aria-describedby={nameError ? 'profile-name-error' : undefined}
-            placeholder="Как вас называть"
-            onChange={(event) => {
-              setName(event.target.value)
-              setNameError('')
-              setSaved(false)
-            }}
-            className="field-control mt-1.5 min-h-11 w-full rounded-[10px] border px-3 py-2.5 text-[15px]"
-          />
-          {nameError && (
-            <span id="profile-name-error" className="text-error mt-1 block text-sm">
-              {nameError}
-            </span>
-          )}
-        </label>
+      <Card as="form" className="mb-3 p-4" noValidate onSubmit={submitProfile}>
+        <Input
+          id="profile-name"
+          label="Имя"
+          type="text"
+          maxLength={40}
+          value={name}
+          error={nameError}
+          placeholder="Как вас называть"
+          onChange={(event) => {
+            setName(event.target.value)
+            setNameError('')
+            setSaved(false)
+          }}
+          className="mb-3"
+        />
 
-        <label htmlFor="profile-contact" className="mb-3 block text-sm text-secondary">
-          Контакт для заказчика
-          <input
-            id="profile-contact"
-            type="text"
-            maxLength={80}
-            value={contact}
-            placeholder="Telegram или телефон"
-            onChange={(event) => {
-              setContact(event.target.value)
-              setSaved(false)
-            }}
-            className="field-control mt-1.5 min-h-11 w-full rounded-[10px] border px-3 py-2.5 text-[15px]"
-          />
-        </label>
+        <Input
+          id="profile-contact"
+          label="Контакт для заказчика"
+          type="text"
+          maxLength={80}
+          value={contact}
+          placeholder="Telegram или телефон"
+          onChange={(event) => {
+            setContact(event.target.value)
+            setSaved(false)
+          }}
+          className="mb-3"
+        />
 
         <fieldset className="theme-settings mb-3 rounded-[10px] border p-3">
           <legend className="px-1 text-sm">Навыки</legend>
@@ -169,21 +157,21 @@ export default function Profile({
           </div>
         </fieldset>
 
-        <button
+        <Button
           type="submit"
           disabled={saving}
-          className="button-primary min-h-11 rounded-[10px] px-4 py-2.5"
+          variant="primary"
         >
           Сохранить
-        </button>
+        </Button>
         {saved && (
           <p role="status" className="text-accent mt-2 text-sm">
             Профиль сохранён
           </p>
         )}
-      </form>
+      </Card>
 
-      <div className="card-background rounded-xl border border-default p-4">
+      <Card className="p-4">
         <div className="flex items-center gap-4">
           <FirstOrderStamp earned={earned} />
           <div>
@@ -200,7 +188,7 @@ export default function Profile({
             ? 'Печать «Первый заказ» получена. Она будет стоять на всех ваших работах.'
             : 'Печать появится после первого оплаченного заказа'}
         </p>
-      </div>
+      </Card>
       <Button
         type="button"
         variant="secondary"
