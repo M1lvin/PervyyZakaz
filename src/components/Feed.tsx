@@ -4,6 +4,7 @@ import Badge from './ui/Badge'
 import Button from './ui/Button'
 import Card from './ui/Card'
 import Input from './ui/Input'
+import { supabase } from '../lib/supabase'
 
 interface FeedProps {
   orders: MyOrder[]
@@ -38,6 +39,9 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
   const [draft, setDraft] = useState<ResponseDraft>(emptyDraft)
   const [errors, setErrors] = useState<ResponseErrors>({})
   const [submitting, setSubmitting] = useState(false)
+  const [aiBusy, setAiBusy] = useState<'reply' | 'price' | null>(null)
+  const [aiError, setAiError] = useState('')
+  const [aiUnavailable, setAiUnavailable] = useState(false)
 
   const visibleOrders = orders.filter(
     (order) =>
@@ -48,12 +52,66 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
     setOpenOrderId(order.id)
     setDraft(responseForOrder(order))
     setErrors({})
+    setAiError('')
   }
 
   function closeResponseForm() {
     setOpenOrderId(null)
     setDraft(emptyDraft)
     setErrors({})
+    setAiError('')
+  }
+
+  async function requestAi(action: 'reply' | 'price', order: MyOrder) {
+    if (!supabase || aiBusy) return
+
+    setAiBusy(action)
+    setAiError('')
+    try {
+      const { data, error } = await supabase.functions.invoke<{
+        text?: string
+        error?: string
+      }>('ai-helper', {
+        body: {
+          action,
+          title: order.title,
+          description: order.description,
+          skill: order.skill,
+          budget: order.price,
+          days: order.days,
+        },
+      })
+      if (error) {
+        setAiUnavailable(true)
+        throw new Error('AI-помощник временно недоступен. Попробуйте позже.')
+      }
+      if (data?.error) {
+        setAiError(data.error)
+        return
+      }
+      if (!data?.text) {
+        setAiError('Не удалось получить ответ AI. Попробуйте позже.')
+        return
+      }
+      const suggestedPrice = data.text.match(/\d[\d\s]*/)?.[0]?.replace(/\s/g, '')
+      if (action === 'price' && !suggestedPrice) {
+        setAiError(data.text)
+        return
+      }
+      setDraft((current) =>
+        action === 'reply'
+          ? { ...current, message: data.text ?? '' }
+          : { ...current, price: suggestedPrice ?? current.price },
+      )
+    } catch (error) {
+      setAiError(
+        error instanceof Error
+          ? error.message
+          : 'AI-помощник временно недоступен. Попробуйте позже.',
+      )
+    } finally {
+      setAiBusy(null)
+    }
   }
 
   async function submitResponse(event: FormEvent<HTMLFormElement>, order: MyOrder) {
@@ -174,6 +232,31 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
                     className="ui-input mt-1.5 min-h-[88px] w-full resize-y text-[15px]"
                   />
                 </label>
+                {supabase && !aiUnavailable && (
+                  <div className="mb-3 flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      disabled={aiBusy !== null}
+                      onClick={() => void requestAi('reply', order)}
+                    >
+                      {aiBusy === 'reply' ? 'Думаю...' : 'Написать за меня'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      disabled={aiBusy !== null}
+                      onClick={() => void requestAi('price', order)}
+                    >
+                      {aiBusy === 'price' ? 'Думаю...' : 'Подсказать цену'}
+                    </Button>
+                  </div>
+                )}
+                {aiError && (
+                  <p role="alert" className="text-error mb-2 text-sm">
+                    {aiError}
+                  </p>
+                )}
                 {errors.form && (
                   <p role="alert" className="text-error mb-2 text-sm">
                     {errors.form}
@@ -182,14 +265,14 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
                 <div className="flex flex-wrap gap-2">
                   <Button
                     type="submit"
-                    disabled={submitting}
+                    disabled={submitting || aiBusy !== null}
                     variant="primary"
                   >
                     {submitting ? 'Отправляем…' : 'Отправить отклик'}
                   </Button>
                   <Button
                     type="button"
-                    disabled={submitting}
+                    disabled={submitting || aiBusy !== null}
                     onClick={closeResponseForm}
                     variant="secondary"
                   >

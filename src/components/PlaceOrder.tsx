@@ -3,6 +3,7 @@ import { skills, type Order, type Skill } from '../data/orders'
 import Button from './ui/Button'
 import Card from './ui/Card'
 import Input from './ui/Input'
+import { supabase } from '../lib/supabase'
 
 interface PlaceOrderProps {
   onPublish: (order: Order) => Promise<boolean>
@@ -37,6 +38,52 @@ export default function PlaceOrder({ onPublish }: PlaceOrderProps) {
   const [values, setValues] = useState<FormValues>(initialValues)
   const [errors, setErrors] = useState<FormErrors>({})
   const [submitting, setSubmitting] = useState(false)
+  const [aiBusy, setAiBusy] = useState(false)
+  const [aiError, setAiError] = useState('')
+  const [aiUnavailable, setAiUnavailable] = useState(false)
+
+  async function improveDescription() {
+    if (!supabase || aiBusy) return
+
+    setAiBusy(true)
+    setAiError('')
+    try {
+      const { data, error } = await supabase.functions.invoke<{
+        text?: string
+        error?: string
+      }>('ai-helper', {
+        body: {
+          action: 'improve',
+          title: values.title,
+          description: values.description,
+          skill: values.skill,
+          budget: Number(values.budget) || 0,
+          days: Number(values.days) || 0,
+        },
+      })
+      if (error) {
+        setAiUnavailable(true)
+        throw new Error('AI-помощник временно недоступен. Попробуйте позже.')
+      }
+      if (data?.error) {
+        setAiError(data.error)
+        return
+      }
+      if (!data?.text) {
+        setAiError('Не удалось получить ответ AI. Попробуйте позже.')
+        return
+      }
+      update('description', data.text)
+    } catch (error) {
+      setAiError(
+        error instanceof Error
+          ? error.message
+          : 'AI-помощник временно недоступен. Попробуйте позже.',
+      )
+    } finally {
+      setAiBusy(false)
+    }
+  }
 
   async function submitOrder(event: FormEvent<HTMLElement>) {
     event.preventDefault()
@@ -115,8 +162,10 @@ export default function PlaceOrder({ onPublish }: PlaceOrderProps) {
           className="mb-3"
         />
 
-        <label htmlFor="order-description" className="text-secondary mb-3 block text-sm">
-          Что нужно сделать
+        <div className="mb-3">
+          <label htmlFor="order-description" className="text-secondary block text-sm">
+            Что нужно сделать
+          </label>
           <textarea
             id="order-description"
             rows={4}
@@ -126,7 +175,23 @@ export default function PlaceOrder({ onPublish }: PlaceOrderProps) {
             onChange={(event) => update('description', event.target.value)}
             className="ui-input mt-1.5 min-h-[88px] w-full resize-y text-[15px]"
           />
-        </label>
+          {supabase && !aiUnavailable && (
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={aiBusy}
+              onClick={() => void improveDescription()}
+              className="mt-2"
+            >
+              {aiBusy ? 'Думаю...' : 'Улучшить описание'}
+            </Button>
+          )}
+        </div>
+        {aiError && (
+          <p role="alert" className="text-error mb-3 text-sm">
+            {aiError}
+          </p>
+        )}
 
         <div className="grid grid-cols-2 gap-3">
           <Input
@@ -175,7 +240,7 @@ export default function PlaceOrder({ onPublish }: PlaceOrderProps) {
 
         <Button
           type="submit"
-          disabled={submitting}
+          disabled={submitting || aiBusy}
           variant="primary"
           className="sticky bottom-20 z-10 w-full shadow-md"
         >
