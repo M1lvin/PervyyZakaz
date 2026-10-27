@@ -33,7 +33,7 @@ function numberValue(value: unknown): number {
 
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { status: 200, headers: corsHeaders })
   }
 
   if (request.method !== 'POST') {
@@ -91,7 +91,7 @@ Deno.serve(async (request) => {
 
   const apiKey = Deno.env.get('GEMINI_API_KEY')
   if (!apiKey) {
-    return jsonResponse({ error: 'AI-помощник временно недоступен. Настройте секрет GEMINI_API_KEY в Supabase.' }, 503)
+    return jsonResponse({ error: 'AI не настроен' }, 503)
   }
 
   const instructions: Record<Action, string> = {
