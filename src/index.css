@@ -14,6 +14,10 @@
   --text-3: #8A8A8A;
   --btn-bg: #FFFFFF;
   --btn-text: #000000;
+  --nav-bg: #1A1A1A;
+  --nav-icon: #B4B4B4;
+  --nav-border: var(--line-strong);
+  --nav-shadow: none;
   --nav-active-bg: #FFFFFF;
   --nav-active-text: #000000;
   --hero-text: #F5F5F5;
@@ -38,6 +42,10 @@
   --text-3: #737373;
   --btn-bg: #0A0A0A;
   --btn-text: #FFFFFF;
+  --nav-bg: #000000;
+  --nav-icon: #FFFFFF;
+  --nav-border: transparent;
+  --nav-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
   --nav-active-bg: #FFFFFF;
   --nav-active-text: #000000;
   --hero-text: #F5F5F5;
@@ -62,6 +70,10 @@
   --text-3: #737373;
   --btn-bg: #0A0A0A;
   --btn-text: #FFFFFF;
+  --nav-bg: #000000;
+  --nav-icon: #FFFFFF;
+  --nav-border: transparent;
+  --nav-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
   --nav-active-bg: #FFFFFF;
   --nav-active-text: #000000;
   --hero-text: #F5F5F5;
@@ -86,6 +98,10 @@
     --text-3: #8A8A8A;
     --btn-bg: #FFFFFF;
     --btn-text: #000000;
+    --nav-bg: #1A1A1A;
+    --nav-icon: #B4B4B4;
+    --nav-border: var(--line-strong);
+    --nav-shadow: none;
     --nav-active-bg: #FFFFFF;
     --nav-active-text: #000000;
     --hero-text: #F5F5F5;
@@ -199,6 +215,13 @@ textarea::placeholder {
   letter-spacing: -0.02em;
 }
 
+.app-sheet h2 {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 26px;
+  letter-spacing: -0.01em;
+}
+
 .hero p {
   margin: 6px 0 0;
   color: var(--hero-muted);
@@ -225,7 +248,7 @@ textarea::placeholder {
   border-radius: 32px 32px 0 0;
   background: var(--sheet);
   color: var(--text);
-  padding: 24px 20px calc(88px + 24px + env(safe-area-inset-bottom, 0px));
+  padding: 24px 20px calc(88px + env(safe-area-inset-bottom, 0px));
   animation: sheet-enter var(--dur-slow) var(--ease-out) both;
 }
 
@@ -600,9 +623,10 @@ button:disabled {
   gap: 0;
   padding: 6px;
   transform: translateX(-50%);
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--nav-border);
   border-radius: 999px;
-  background: var(--field);
+  background: var(--nav-bg);
+  box-shadow: var(--nav-shadow);
   transition: transform var(--dur-base) var(--ease-out);
 }
 
@@ -613,7 +637,7 @@ button:disabled {
   min-width: 0;
   min-height: 52px;
   place-items: center;
-  color: var(--text-2);
+  color: var(--nav-icon);
 }
 
 .app-nav button[aria-current="page"] {
@@ -646,19 +670,23 @@ button:disabled {
 }
 
 .skeleton-block {
-  height: 18px;
-  border-radius: 9px;
+  height: 52px;
+  border-radius: 14px;
   background: linear-gradient(90deg, var(--surface), var(--field), var(--surface));
-  background-size: 200% 100%;
   animation: skeleton-shimmer 1.4s linear infinite;
 }
 
 .skeleton-block:nth-child(2) {
-  width: 72%;
+  height: 96px;
 }
 
 .skeleton-block:nth-child(3) {
-  width: 46%;
+  width: 60%;
+  border-radius: 999px;
+}
+
+.screen-enter {
+  animation: screen-enter var(--dur-base) var(--ease-out) both;
 }
 
 .order-list > .ui-card,
@@ -697,7 +725,7 @@ button:disabled {
     background-color 200ms ease,
     color 200ms ease,
     border-color 200ms ease,
-    transform var(--dur-press) var(--ease-snap);
+    transform var(--dur-fast) var(--ease-out);
 }
 
 .theme-settings {
@@ -797,6 +825,11 @@ button:disabled {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes screen-enter {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @keyframes list-enter {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
@@ -808,8 +841,8 @@ button:disabled {
 }
 
 @keyframes skeleton-shimmer {
-  from { background-position: 100% 0; }
-  to { background-position: -100% 0; }
+  0%, 100% { opacity: 0.65; }
+  50% { opacity: 1; }
 }
 
 @keyframes input-shake {
@@ -851,12 +884,6 @@ button:disabled {
   }
 }
 
-:root[data-theme="light"] .app-nav {
-  border-color: transparent;
-  background: var(--hero);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
-}
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -868,6 +895,7 @@ button:disabled {
   }
 
   .app-sheet,
+  .screen-enter,
   .order-list > .ui-card,
   .app-sheet > section > .ui-card {
     animation-name: reduced-fade;
@@ -875,10 +903,6 @@ button:disabled {
 
   .app-nav {
     transition: none;
-  }
-
-  .app-nav-indicator {
-    display: none;
   }
 
   .ui-button:active,

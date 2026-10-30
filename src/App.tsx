@@ -358,7 +358,7 @@ export default function App() {
       <header className="hero">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h1>Первый заказ</h1>
+            <h1>{activeTab === 'Профиль' && profilePage === 'settings' ? 'Настройки' : activeTab}</h1>
             <p>
               Задачи от местного бизнеса для студентов
             </p>
@@ -399,113 +399,115 @@ export default function App() {
             {profileError}
           </p>
         )}
-        {ordersLoading ? (
-          <div className="loading-skeleton" role="status" aria-label="Загружаем заказы">
-            <div className="skeleton-block" />
-            <div className="skeleton-block" />
-            <div className="skeleton-block" />
-          </div>
-        ) : activeTab === 'Лента' ? (
-          <Feed
-            orders={orders}
-            userId={userId}
-            onTakeOrder={takeOrder}
-            onPlaceOrder={() => setActiveTab('Разместить')}
-            notice={notice}
-          />
-        ) : activeTab === 'Разместить' ? (
-          <PlaceOrder onPublish={publishOrder} />
-        ) : activeTab === 'Мои заказы' ? (
-          <MyOrders
-            orders={orders}
-            userId={userId}
-            onStatusChange={changeOrderStatus}
-            onNavigateToFeed={() => setActiveTab('Лента')}
-          />
-        ) : activeTab === 'Профиль' && profileLoading ? (
-          <div className="loading-skeleton" role="status" aria-label="Загружаем профиль">
-            <div className="skeleton-block" />
-            <div className="skeleton-block" />
-            <div className="skeleton-block" />
-          </div>
-        ) : activeTab === 'Профиль' && profilePage === 'settings' ? (
-          <section aria-label="Настройки">
-            <div className="mb-4 flex items-center gap-3">
-              <Button
-                type="button"
-                onClick={() => setProfilePage('profile')}
-                variant="secondary"
-                className="text-sm"
-              >
-                ← Назад
-              </Button>
-              <h2 className="text-xl font-semibold tracking-tight">Настройки</h2>
+        <div key={`${activeTab}-${profilePage}`} className="screen-enter">
+          {ordersLoading ? (
+            <div className="loading-skeleton" role="status" aria-label="Загружаем заказы">
+              <div className="skeleton-block" />
+              <div className="skeleton-block" />
+              <div className="skeleton-block" />
             </div>
-            {[
-              {
-                title: 'Тема',
-                content: (
-                  <div className="theme-picker" role="radiogroup" aria-label="Тема оформления">
-                    {([
-                      ['light', 'Светлая'],
-                      ['dark', 'Тёмная'],
-                      ['system', 'Как в системе'],
-                    ] as const).map(([value, label]) => (
-                      <label
-                        key={value}
-                        className={`theme-segment ${
-                          theme === value ? 'is-selected' : ''
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="theme"
-                          value={value}
-                          checked={theme === value}
-                          onChange={() => changeTheme(value)}
-                          className="sr-only"
-                        />
-                        {theme === value && (
-                          <motion.span
-                            layoutId={reducedMotion ? undefined : 'active-theme-segment'}
-                            className="theme-segment-indicator"
-                            transition={{ type: 'spring', stiffness: 520, damping: 40 }}
+          ) : activeTab === 'Лента' ? (
+            <Feed
+              orders={orders}
+              userId={userId}
+              onTakeOrder={takeOrder}
+              onPlaceOrder={() => setActiveTab('Разместить')}
+              notice={notice}
+            />
+          ) : activeTab === 'Разместить' ? (
+            <PlaceOrder onPublish={publishOrder} />
+          ) : activeTab === 'Мои заказы' ? (
+            <MyOrders
+              orders={orders}
+              userId={userId}
+              onStatusChange={changeOrderStatus}
+              onNavigateToFeed={() => setActiveTab('Лента')}
+            />
+          ) : activeTab === 'Профиль' && profileLoading ? (
+            <div className="loading-skeleton" role="status" aria-label="Загружаем профиль">
+              <div className="skeleton-block" />
+              <div className="skeleton-block" />
+              <div className="skeleton-block" />
+            </div>
+          ) : activeTab === 'Профиль' && profilePage === 'settings' ? (
+            <section aria-label="Настройки">
+              <div className="mb-4 flex items-center gap-3">
+                <Button
+                  type="button"
+                  onClick={() => setProfilePage('profile')}
+                  variant="secondary"
+                  className="text-sm"
+                >
+                  ← Назад
+                </Button>
+                <h2 className="text-xl font-semibold tracking-tight">Настройки</h2>
+              </div>
+              {[
+                {
+                  title: 'Тема',
+                  content: (
+                    <div className="theme-picker" role="radiogroup" aria-label="Тема оформления">
+                      {([
+                        ['light', 'Светлая'],
+                        ['dark', 'Тёмная'],
+                        ['system', 'Как в системе'],
+                      ] as const).map(([value, label]) => (
+                        <label
+                          key={value}
+                          className={`theme-segment ${
+                            theme === value ? 'is-selected' : ''
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="theme"
+                            value={value}
+                            checked={theme === value}
+                            onChange={() => changeTheme(value)}
+                            className="sr-only"
                           />
-                        )}
-                        {label}
-                      </label>
-                    ))}
-                  </div>
-                ),
-              },
-              {
-                title: 'Язык',
-                content: <p className="text-secondary text-sm">Скоро</p>,
-              },
-            ].map((section) => (
-              <Card
-                as="section"
-                key={section.title}
-                className="mb-3 p-4"
-              >
-                <h3 className="mb-3 text-base font-semibold">{section.title}</h3>
-                {section.content}
-              </Card>
-            ))}
-          </section>
-        ) : activeTab === 'Профиль' ? (
-          <Profile
-            profile={profile}
-            orders={orders}
-            userId={userId}
-            onOpenSettings={() => setProfilePage('settings')}
-            onSave={saveUserProfile}
-            onSignOut={signOut}
-            animateStamp={stampReceived}
-          />
-        ) : (
-          <h2 className="text-base font-semibold">{activeTab}</h2>
-        )}
+                          {theme === value && (
+                            <motion.span
+                              layoutId={reducedMotion ? undefined : 'active-theme-segment'}
+                              className="theme-segment-indicator"
+                              transition={{ type: 'spring', stiffness: 520, damping: 40 }}
+                            />
+                          )}
+                          {label}
+                        </label>
+                      ))}
+                    </div>
+                  ),
+                },
+                {
+                  title: 'Язык',
+                  content: <p className="text-secondary text-sm">Скоро</p>,
+                },
+              ].map((section) => (
+                <Card
+                  as="section"
+                  key={section.title}
+                  className="mb-3 p-4"
+                >
+                  <h3 className="mb-3 text-base font-semibold">{section.title}</h3>
+                  {section.content}
+                </Card>
+              ))}
+            </section>
+          ) : activeTab === 'Профиль' ? (
+            <Profile
+              profile={profile}
+              orders={orders}
+              userId={userId}
+              onOpenSettings={() => setProfilePage('settings')}
+              onSave={saveUserProfile}
+              onSignOut={signOut}
+              animateStamp={stampReceived}
+            />
+          ) : (
+            <h2 className="text-base font-semibold">{activeTab}</h2>
+          )}
+        </div>
       </main>
 
       <nav aria-label="Разделы" className={`app-nav ${navKeyboardOpen ? 'is-keyboard-open' : ''}`}>
@@ -523,9 +525,9 @@ export default function App() {
                 setActiveTab(tab)
               }}
             >
-              {activeTab === tab && !reducedMotion && (
+              {activeTab === tab && (
                 <motion.span
-                  layoutId="active-navigation-indicator"
+                  layoutId={reducedMotion ? undefined : 'active-navigation-indicator'}
                   className="app-nav-indicator"
                   transition={{ type: 'spring', stiffness: 520, damping: 40 }}
                 />
