@@ -11,8 +11,8 @@ export default function Input({ label, error, id, className = '', ...props }: In
   const errorId = error ? `${inputId}-error` : undefined
 
   return (
-    <div>
-      <label htmlFor={inputId} className="mb-1.5 block text-sm text-secondary">
+    <div className={className}>
+      <label htmlFor={inputId} className="ui-input-label">
         {label}
       </label>
       <input
@@ -20,13 +20,13 @@ export default function Input({ label, error, id, className = '', ...props }: In
         id={inputId}
         aria-invalid={Boolean(error)}
         aria-describedby={errorId}
-        className={`ui-input w-full ${className}`.trim()}
+        className="ui-input"
       />
-      {error && (
-        <span id={errorId} className="text-error mt-1 block text-sm">
-          {error}
+      <span className={`input-error ${error ? 'is-visible' : ''}`}>
+        <span id={errorId} role={error ? 'alert' : undefined}>
+          {error ?? ''}
         </span>
-      )}
+      </span>
     </div>
   )
 }

@@ -180,10 +180,12 @@ export default function PlaceOrder({ onPublish }: PlaceOrderProps) {
               type="button"
               variant="secondary"
               disabled={aiBusy}
+              loading={aiBusy}
+              loadingLabel="Улучшаем описание"
               onClick={() => void improveDescription()}
               className="mt-2"
             >
-              {aiBusy ? 'Думаю...' : 'Улучшить описание'}
+              Улучшить описание
             </Button>
           )}
         </div>
@@ -242,9 +244,11 @@ export default function PlaceOrder({ onPublish }: PlaceOrderProps) {
           type="submit"
           disabled={submitting || aiBusy}
           variant="primary"
-          className="sticky bottom-20 z-10 w-full shadow-md"
+          loading={submitting}
+          loadingLabel="Публикуем заказ"
+          className="w-full"
         >
-          {submitting ? 'Публикуем…' : 'Опубликовать заказ'}
+          Опубликовать заказ
         </Button>
       </div>
     </Card>

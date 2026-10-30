@@ -1,15 +1,18 @@
 import { useState, type FormEvent } from 'react'
+import { Search } from 'lucide-react'
 import { skills, type MyOrder } from '../data/orders'
 import Badge from './ui/Badge'
 import Button from './ui/Button'
 import Card from './ui/Card'
 import Input from './ui/Input'
 import { supabase } from '../lib/supabase'
+import { formatSom } from '../lib/format'
 
 interface FeedProps {
   orders: MyOrder[]
   userId: string
   onTakeOrder: (orderId: string, price: number, days: number, message: string) => Promise<boolean>
+  onPlaceOrder: () => void
   notice?: string | null
 }
 
@@ -33,7 +36,7 @@ function responseForOrder(order: MyOrder): OrderDraftForm {
 
 interface OrderDraftForm extends ResponseDraft {}
 
-export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps) {
+export default function Feed({ orders, userId, onTakeOrder, onPlaceOrder, notice }: FeedProps) {
   const [skillFilter, setSkillFilter] = useState<string>('Все')
   const [openOrderId, setOpenOrderId] = useState<string | null>(null)
   const [draft, setDraft] = useState<ResponseDraft>(emptyDraft)
@@ -145,7 +148,7 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
   return (
     <section aria-label="Лента заказов">
       {notice && (
-        <p role="status" className="feedback-success mb-3 rounded-[10px] px-4 py-3 text-sm">
+        <p role="status" className="toast">
           {notice}
         </p>
       )}
@@ -167,7 +170,8 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
       </div>
 
       {visibleOrders.length > 0 ? (
-        visibleOrders.map((order) => (
+        <div className="order-list">
+          {visibleOrders.map((order) => (
           <Card
             as="article"
             key={order.id}
@@ -175,14 +179,14 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
           >
             <div className="flex items-start justify-between gap-3">
               <h2 className="text-base font-semibold">{order.title}</h2>
-              <span className="text-accent shrink-0 whitespace-nowrap font-semibold">
-                {order.price.toLocaleString('ru-RU')} сом
+              <span className="money text-accent shrink-0 whitespace-nowrap font-semibold">
+                {formatSom(order.price)}
               </span>
             </div>
             <p className="text-secondary mt-1 text-[13px]">
               {order.business} · {order.days} дн. · <Badge>{order.skill}</Badge>
             </p>
-            <p className="mb-3.5 mt-2.5 text-[15px]">{order.description}</p>
+            <p className="mb-3.5 mt-2.5 text-base">{order.description}</p>
 
             {openOrderId === order.id ? (
               <form
@@ -238,17 +242,21 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
                       type="button"
                       variant="secondary"
                       disabled={aiBusy !== null}
+                      loading={aiBusy === 'reply'}
+                      loadingLabel="Готовим текст отклика"
                       onClick={() => void requestAi('reply', order)}
                     >
-                      {aiBusy === 'reply' ? 'Думаю...' : 'Написать за меня'}
+                      Написать за меня
                     </Button>
                     <Button
                       type="button"
                       variant="secondary"
                       disabled={aiBusy !== null}
+                      loading={aiBusy === 'price'}
+                      loadingLabel="Подбираем цену"
                       onClick={() => void requestAi('price', order)}
                     >
-                      {aiBusy === 'price' ? 'Думаю...' : 'Подсказать цену'}
+                      Подсказать цену
                     </Button>
                   </div>
                 )}
@@ -267,8 +275,10 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
                     type="submit"
                     disabled={submitting || aiBusy !== null}
                     variant="primary"
+                    loading={submitting}
+                    loadingLabel="Отправляем отклик"
                   >
-                    {submitting ? 'Отправляем…' : 'Отправить отклик'}
+                    Отправить отклик
                   </Button>
                   <Button
                     type="button"
@@ -296,11 +306,20 @@ export default function Feed({ orders, userId, onTakeOrder, notice }: FeedProps)
               )
             )}
           </Card>
-        ))
+          ))}
+        </div>
       ) : (
-        <Card className="text-secondary px-3 py-10 text-center">
-          <h2 className="text-primary mb-1 text-base font-semibold">Пока нет заказов</h2>
-          <p>Попробуйте выбрать другой навык.</p>
+        <Card className="empty-state">
+          <span className="empty-state-icon"><Search aria-hidden="true" size={40} strokeWidth={1.75} /></span>
+          <h2>{skillFilter === 'Все' ? 'Пока нет заказов' : 'Заказы не найдены'}</h2>
+          <p>{skillFilter === 'Все' ? 'Новые заказы появятся в ленте.' : 'Попробуйте другой навык.'}</p>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={skillFilter === 'Все' ? onPlaceOrder : () => setSkillFilter('Все')}
+          >
+            {skillFilter === 'Все' ? 'Разместить заказ' : 'Показать все'}
+          </Button>
         </Card>
       )}
     </section>

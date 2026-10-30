@@ -1,8 +1,10 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useReducedMotion } from 'motion/react'
 import { skills, type MyOrder, type Skill } from '../data/orders'
 import Card from './ui/Card'
 import Button from './ui/Button'
 import Input from './ui/Input'
+import { formatSom } from '../lib/format'
 
 export interface UserProfile {
   name: string
@@ -17,24 +19,33 @@ interface ProfileProps {
   onOpenSettings: () => void
   onSave: (profile: UserProfile) => Promise<boolean>
   onSignOut: () => void
+  animateStamp: boolean
 }
 
-export function FirstOrderStamp({ earned, small = false }: { earned: boolean; small?: boolean }) {
+export function FirstOrderStamp({
+  earned,
+  small = false,
+  animate = false,
+}: {
+  earned: boolean
+  small?: boolean
+  animate?: boolean
+}) {
   return (
     <div
       aria-label={earned ? 'Печать «Первый заказ» получена' : 'Печать ещё не получена'}
-      className={`profile-stamp-shadow flex shrink-0 rotate-[-10deg] flex-col items-center justify-center rounded-full border-2 leading-none ${
+      className={`profile-stamp-shadow flex shrink-0 flex-col items-center justify-center rounded-full border leading-none ${
         small ? 'h-[54px] w-[54px]' : 'h-[76px] w-[76px]'
       } ${
         earned
           ? 'border-accent text-accent'
           : 'border-default text-secondary'
-      }`}
+      } ${animate && earned ? 'stamp-earned' : ''}`}
     >
-      <span className={`font-bold tracking-[0.08em] ${small ? 'text-[10px]' : 'text-[13px]'}`}>
+      <span className="text-xs font-bold tracking-[0.08em]">
         ПЕРВЫЙ
       </span>
-      {!small && <small className="mt-0.5 text-[11px]">заказ</small>}
+      {!small && <span className="mt-0.5 text-xs">заказ</span>}
     </div>
   )
 }
@@ -46,6 +57,7 @@ export default function Profile({
   onOpenSettings,
   onSave,
   onSignOut,
+  animateStamp,
 }: ProfileProps) {
   const [name, setName] = useState(profile.name)
   const [contact, setContact] = useState(profile.contact)
@@ -67,7 +79,31 @@ export default function Profile({
     (total, order) => total + (order.responsePrice ?? 0),
     0,
   )
+  const [displayEarned, setDisplayEarned] = useState(totalEarned)
+  const previousEarned = useRef(totalEarned)
+  const reducedMotion = useReducedMotion()
   const earned = paidOrders.length > 0
+
+  useEffect(() => {
+    if (previousEarned.current === totalEarned) return
+    const from = previousEarned.current
+    previousEarned.current = totalEarned
+    if (reducedMotion) {
+      setDisplayEarned(totalEarned)
+      return
+    }
+
+    const startedAt = performance.now()
+    let frame = 0
+    const updateCount = (now: number) => {
+      const progress = Math.min((now - startedAt) / 700, 1)
+      const eased = 1 - (1 - progress) ** 3
+      setDisplayEarned(Math.round(from + (totalEarned - from) * eased))
+      if (progress < 1) frame = requestAnimationFrame(updateCount)
+    }
+    frame = requestAnimationFrame(updateCount)
+    return () => cancelAnimationFrame(frame)
+  }, [reducedMotion, totalEarned])
 
   async function submitProfile(event: FormEvent<HTMLElement>) {
     event.preventDefault()
@@ -161,11 +197,13 @@ export default function Profile({
           type="submit"
           disabled={saving}
           variant="primary"
+          loading={saving}
+          loadingLabel="Сохраняем профиль"
         >
           Сохранить
         </Button>
         {saved && (
-          <p role="status" className="text-accent mt-2 text-sm">
+          <p role="status" className="text-secondary mt-2 text-sm">
             Профиль сохранён
           </p>
         )}
@@ -173,10 +211,10 @@ export default function Profile({
 
       <Card className="p-4">
         <div className="flex items-center gap-4">
-          <FirstOrderStamp earned={earned} />
+          <FirstOrderStamp earned={earned} animate={animateStamp} />
           <div>
-            <p className="m-0 text-[22px] font-semibold">
-              {totalEarned.toLocaleString('ru-RU')} сом
+            <p className="total-earned money">
+              {formatSom(displayEarned)}
             </p>
             <p className="mt-1 text-[13px] text-secondary">
               {paidOrders.length} оплаченных заказов

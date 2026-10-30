@@ -1,5 +1,7 @@
 import { useRef, useState, type FormEvent } from 'react'
 import type { AuthError, SupabaseClient } from '@supabase/supabase-js'
+import { Eye, EyeOff } from 'lucide-react'
+import Button from './ui/Button'
 
 interface AuthProps {
   client: SupabaseClient
@@ -47,6 +49,7 @@ export default function Auth({
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [emailError, setEmailError] = useState('')
+  const [passwordError, setPasswordError] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
@@ -60,12 +63,13 @@ export default function Auth({
     setMessage('')
 
     const normalizedEmail = email.trim()
+    if (!normalizedEmail) setEmailError('Введите email')
+    if (!password) setPasswordError('Введите пароль')
     if (!normalizedEmail || !password) {
-      setError('Введите email и пароль')
       return
     }
     if (mode === 'signup' && password.length < 6) {
-      setError('Пароль должен быть не короче 6 символов')
+      setPasswordError('Пароль должен быть не короче 6 символов')
       return
     }
 
@@ -156,7 +160,7 @@ export default function Auth({
     setError('')
     setMessage('')
     if (password.length < 6) {
-      setError('Пароль должен быть не короче 6 символов')
+      setPasswordError('Пароль должен быть не короче 6 символов')
       return
     }
 
@@ -181,13 +185,14 @@ export default function Auth({
     setMode(nextMode)
     setError('')
     setEmailError('')
+    setPasswordError('')
     setMessage('')
   }
 
   if (recoveryMode) {
     return (
-      <main className="flex flex-1 items-center justify-center px-4 py-8">
-        <section className="card-background w-full max-w-[420px] rounded-xl border border-default p-5">
+      <div className="auth-main flex flex-1 items-center justify-center">
+        <section className="ui-card w-full">
           <h1 className="text-[22px] font-semibold tracking-tight">Новый пароль</h1>
           <p className="text-secondary mt-1 text-sm">Первый заказ</p>
 
@@ -200,8 +205,13 @@ export default function Auth({
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="new-password"
                   value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  className="field-control min-h-11 w-full rounded-[10px] border px-3 py-2.5 pr-12 text-[15px]"
+                  aria-invalid={Boolean(passwordError)}
+                  aria-describedby={passwordError ? 'auth-password-error' : undefined}
+                  onChange={(event) => {
+                    setPassword(event.target.value)
+                    setPasswordError('')
+                  }}
+                  className="ui-input pr-12"
                 />
                 <button
                   type="button"
@@ -209,20 +219,15 @@ export default function Auth({
                   onClick={() => setShowPassword((visible) => !visible)}
                   className="text-secondary absolute inset-y-0 right-0 flex w-11 items-center justify-center"
                 >
-                  <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
-                    {showPassword ? (
-                      <>
-                        <path d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8" />
-                        <path d="M9.9 5.2A10.8 10.8 0 0 1 12 5c5 0 8.5 4.5 9.5 7-.4 1-1.3 2.2-2.5 3.3M6.2 6.2C3.9 7.7 2.7 9.7 2.5 12c.5 1.2 1.6 2.8 3.5 4.1A10.5 10.5 0 0 0 12 18c.8 0 1.5-.1 2.2-.3" />
-                      </>
-                    ) : (
-                      <>
-                        <path d="M2.5 12S6 5 12 5s9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7Z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </>
-                    )}
-                  </svg>
+                  {showPassword
+                    ? <EyeOff aria-hidden="true" size={20} strokeWidth={1.75} />
+                    : <Eye aria-hidden="true" size={20} strokeWidth={1.75} />}
                 </button>
+              </span>
+              <span className={`input-error ${passwordError ? 'is-visible' : ''}`}>
+                <span id="auth-password-error" role={passwordError ? 'alert' : undefined}>
+                  {passwordError}
+                </span>
               </span>
             </label>
             {error && (
@@ -230,23 +235,25 @@ export default function Auth({
                 {error}
               </p>
             )}
-            <button
+            <Button
               type="submit"
               disabled={loading}
-              className="button-primary min-h-11 w-full rounded-[10px] px-4 py-2.5 disabled:opacity-60"
+              loading={loading}
+              loadingLabel="Сохраняем пароль"
+              className="w-full"
             >
-              {loading ? 'Подождите...' : 'Сохранить пароль'}
-            </button>
+              Сохранить пароль
+            </Button>
           </form>
         </section>
-      </main>
+      </div>
     )
   }
 
   return (
-    <main className="flex flex-1 items-center justify-center px-4 py-8">
-      <section className="card-background w-full max-w-[420px] rounded-xl border border-default p-5">
-        <h1 className="text-[22px] font-semibold tracking-tight">
+    <div className="auth-main flex flex-1 items-center justify-center">
+      <section className="ui-card w-full">
+        <h1 className="text-xl font-semibold tracking-tight">
           {mode === 'signin' ? 'Вход' : 'Регистрация'}
         </h1>
         <p className="text-secondary mt-1 text-sm">Первый заказ</p>
@@ -266,13 +273,13 @@ export default function Auth({
                 setEmail(event.target.value)
                 setEmailError('')
               }}
-              className="field-control mt-1.5 min-h-11 w-full rounded-[10px] border px-3 py-2.5 text-[15px]"
+              className="ui-input mt-1.5"
             />
-            {emailError && (
-              <span id="auth-email-error" className="text-error mt-1 block text-sm">
+            <span className={`input-error ${emailError ? 'is-visible' : ''}`}>
+              <span id="auth-email-error" role={emailError ? 'alert' : undefined}>
                 {emailError}
               </span>
-            )}
+            </span>
           </label>
           <label htmlFor="auth-password" className="text-secondary mb-3 block text-sm">
             Пароль
@@ -281,9 +288,19 @@ export default function Auth({
               type="password"
               autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="field-control mt-1.5 min-h-11 w-full rounded-[10px] border px-3 py-2.5 text-[15px]"
+              aria-invalid={Boolean(passwordError)}
+              aria-describedby={passwordError ? 'auth-password-error' : undefined}
+              onChange={(event) => {
+                setPassword(event.target.value)
+                setPasswordError('')
+              }}
+              className="ui-input mt-1.5"
             />
+            <span className={`input-error ${passwordError ? 'is-visible' : ''}`}>
+              <span id="auth-password-error" role={passwordError ? 'alert' : undefined}>
+                {passwordError}
+              </span>
+            </span>
           </label>
 
           {error && (
@@ -292,24 +309,26 @@ export default function Auth({
             </p>
           )}
           {message && (
-            <p role="status" className="text-accent mb-3 text-sm">
+            <p role="status" className="text-secondary mb-3 text-sm">
               {message}
             </p>
           )}
 
-          <button
+          <Button
             type="submit"
             disabled={loading}
-            className="button-primary min-h-11 w-full rounded-[10px] px-4 py-2.5 disabled:opacity-60"
+            loading={loading}
+            loadingLabel={mode === 'signin' ? 'Выполняется вход' : 'Регистрация'}
+            className="w-full"
           >
-            {loading ? 'Подождите...' : mode === 'signin' ? 'Войти' : 'Зарегистрироваться'}
-          </button>
+            {mode === 'signin' ? 'Войти' : 'Зарегистрироваться'}
+          </Button>
           {mode === 'signin' && (
             <button
               type="button"
               disabled={loading || googleLoading}
               onClick={sendPasswordReset}
-              className="text-accent mt-3 text-sm font-semibold underline disabled:opacity-60"
+              className="text-primary mt-3 text-sm font-semibold underline"
             >
               Забыли пароль?
             </button>
@@ -321,32 +340,30 @@ export default function Auth({
           <span>или</span>
           <span className="bg-border h-px flex-1" />
         </div>
-        <button
+        <Button
           type="button"
           disabled={loading || googleLoading}
           onClick={signInWithGoogle}
-          className="button-secondary flex min-h-11 w-full items-center justify-center gap-2 rounded-[10px] px-4 py-2.5 disabled:opacity-60"
+          variant="secondary"
+          loading={googleLoading}
+          loadingLabel="Выполняется вход через Google"
+          className="w-full"
         >
-          <svg aria-hidden="true" viewBox="0 0 48 48" className="h-5 w-5">
-            <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3A12 12 0 1 1 32 15.1l5.7-5.7A20 20 0 1 0 44 24c0-1.2-.1-2.4-.4-3.5Z" />
-            <path fill="#FF3D00" d="m6.3 14.7 6.6 4.8A12 12 0 0 1 32 15.1l5.7-5.7A20 20 0 0 0 6.3 14.7Z" />
-            <path fill="#4CAF50" d="M24 44a20 20 0 0 0 13.4-5.2l-6.2-5.2A12 12 0 0 1 12.8 28l-6.5 5A20 20 0 0 0 24 44Z" />
-            <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3a12 12 0 0 1-4.1 5.6l6.2 5.2A20 20 0 0 0 44 24c0-1.2-.1-2.4-.4-3.5Z" />
-          </svg>
-          {googleLoading ? 'Подождите...' : 'Войти через Google'}
-        </button>
+          <span aria-hidden="true" className="google-mark">G</span>
+          Войти через Google
+        </Button>
 
         <p className="text-secondary mt-4 text-center text-sm">
           {mode === 'signin' ? 'Нет аккаунта?' : 'Уже есть аккаунт?'}{' '}
           <button
             type="button"
             onClick={() => changeMode(mode === 'signin' ? 'signup' : 'signin')}
-            className="text-accent font-semibold underline"
+            className="text-primary font-semibold underline"
           >
             {mode === 'signin' ? 'Зарегистрироваться' : 'Войти'}
           </button>
         </p>
       </section>
-    </main>
+    </div>
   )
 }

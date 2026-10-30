@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { LayoutList, Package, PlusCircle, User } from 'lucide-react'
+import { motion, useReducedMotion } from 'motion/react'
 import Auth from './components/Auth'
 import Feed from './components/Feed'
 import MyOrders from './components/MyOrders'
@@ -56,10 +57,13 @@ export default function App() {
   const [passwordChangedNotice, setPasswordChangedNotice] = useState(false)
   const [authLoading, setAuthLoading] = useState(true)
   const [authError, setAuthError] = useState('')
+  const [navKeyboardOpen, setNavKeyboardOpen] = useState(false)
+  const [stampReceived, setStampReceived] = useState(false)
   const [ordersLoading, setOrdersLoading] = useState(true)
   const [ordersError, setOrdersError] = useState('')
   const [ordersReload, setOrdersReload] = useState(0)
   const userId = session?.user.id ?? ''
+  const reducedMotion = useReducedMotion()
 
   function changeTheme(nextTheme: Theme) {
     localStorage.setItem('theme', nextTheme)
@@ -84,6 +88,38 @@ export default function App() {
     systemTheme.addEventListener('change', updateThemeColor)
     return () => systemTheme.removeEventListener('change', updateThemeColor)
   }, [theme])
+
+  useEffect(() => {
+    const isInput = (target: EventTarget | null) =>
+      target instanceof HTMLElement && target.matches('input, textarea, select')
+    const updateKeyboardState = (target: EventTarget | null) => {
+      setNavKeyboardOpen(window.innerWidth >= 768 && isInput(target))
+    }
+    const handleFocusIn = (event: FocusEvent) => updateKeyboardState(event.target)
+    const handleFocusOut = (event: FocusEvent) => updateKeyboardState(event.relatedTarget)
+    const handleResize = () => updateKeyboardState(document.activeElement)
+
+    document.addEventListener('focusin', handleFocusIn)
+    document.addEventListener('focusout', handleFocusOut)
+    window.addEventListener('resize', handleResize)
+    return () => {
+      document.removeEventListener('focusin', handleFocusIn)
+      document.removeEventListener('focusout', handleFocusOut)
+      window.removeEventListener('resize', handleResize)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!stampReceived) return
+    const timeout = window.setTimeout(() => setStampReceived(false), 360)
+    return () => window.clearTimeout(timeout)
+  }, [stampReceived])
+
+  useEffect(() => {
+    if (!notice) return
+    const timeout = window.setTimeout(() => setNotice(null), 2600)
+    return () => window.clearTimeout(timeout)
+  }, [notice])
 
   useEffect(() => {
     if (!supabase) {
@@ -233,6 +269,7 @@ export default function App() {
     try {
       const updatedOrder = await updateOrderStatus(supabase, orderId, userId, status)
       setOrders((current) => current.map((order) => order.id === orderId ? updatedOrder : order))
+      if (status === 'paid') setStampReceived(true)
     } catch (error) {
       setOrdersError(orderErrorMessage(error))
     }
@@ -267,68 +304,81 @@ export default function App() {
 
   if (!supabase) {
     return (
-      <div className="mx-auto flex min-h-dvh max-w-[480px] items-center px-4">
-        <p role="alert" className="rounded-xl border border-default card-background p-4 text-sm text-error">
-          Для входа настройте VITE_SUPABASE_URL и VITE_SUPABASE_ANON_KEY в файле .env
-        </p>
+      <div className="app-shell">
+        <header className="hero"><h1>Первый заказ</h1></header>
+        <main className="app-sheet">
+          <p role="alert" className="ui-card text-error">
+            Для входа настройте VITE_SUPABASE_URL и VITE_SUPABASE_ANON_KEY в файле .env
+          </p>
+        </main>
       </div>
     )
   }
 
   if (authLoading) {
     return (
-      <div className="page-background mx-auto flex min-h-dvh max-w-[480px] items-center justify-center text-sm text-secondary">
-        Загрузка...
+      <div className="app-shell">
+        <header className="hero"><h1>Первый заказ</h1></header>
+        <main className="app-sheet" aria-label="Загрузка">
+          <div className="loading-skeleton" aria-hidden="true">
+            <div className="skeleton-block" />
+            <div className="skeleton-block" />
+            <div className="skeleton-block" />
+          </div>
+        </main>
       </div>
     )
   }
 
   if (!session || passwordRecovery) {
     return (
-      <div className="page-background mx-auto flex min-h-dvh max-w-[480px] flex-col">
-        {authError && (
-          <p role="alert" className="mx-4 mt-4 text-sm text-error">
-            {authError}
-          </p>
-        )}
-        <Auth
-          client={supabase}
-          recoveryMode={passwordRecovery}
-          onPasswordChanged={() => {
-            setPasswordRecovery(false)
-            setPasswordChangedNotice(true)
-          }}
-        />
+      <div className="app-shell">
+        <header className="hero">
+          <h1>Первый заказ</h1>
+          <p>Задачи от местного бизнеса для студентов</p>
+        </header>
+        <main className="app-sheet">
+          {authError && <p role="alert" className="feedback-error mb-3 rounded-[14px] px-4 py-3">{authError}</p>}
+          {passwordChangedNotice && <p role="status" className="feedback-success mb-3 rounded-[14px] px-4 py-3">Пароль изменён</p>}
+          <Auth
+            client={supabase}
+            recoveryMode={passwordRecovery}
+            onPasswordChanged={() => {
+              setPasswordRecovery(false)
+              setPasswordChangedNotice(true)
+            }}
+          />
+        </main>
       </div>
     )
   }
 
   return (
-    <div className="page-background mx-auto flex min-h-dvh max-w-[480px] flex-col">
-      <header className="px-5 pb-3 pt-5">
+    <div className="app-shell">
+      <header className="hero">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h1 className="text-[22px] font-semibold tracking-tight">Первый заказ</h1>
-            <p className="mt-0.5 text-sm text-secondary">
+            <h1>Первый заказ</h1>
+            <p>
               Задачи от местного бизнеса для студентов
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {orders.some((order) => order.takenBy === userId && order.status === 'paid') && (
-              <FirstOrderStamp earned small />
+              <FirstOrderStamp earned small animate={stampReceived} />
             )}
           </div>
         </div>
       </header>
 
-      <main className="flex-1 px-4 pb-28 pt-1">
+      <main className={`app-sheet ${stampReceived ? 'stamp-received' : ''}`}>
         {authError && (
           <p role="alert" className="mb-3 text-sm text-error">
             {authError}
           </p>
         )}
         {passwordChangedNotice && (
-          <p role="status" className="mb-3 text-sm text-accent">
+          <p role="status" className="mb-3 text-sm text-secondary">
             Пароль изменён
           </p>
         )}
@@ -350,19 +400,34 @@ export default function App() {
           </p>
         )}
         {ordersLoading ? (
-          <p role="status" className="py-8 text-center text-sm text-secondary">
-            Загружаем заказы…
-          </p>
+          <div className="loading-skeleton" role="status" aria-label="Загружаем заказы">
+            <div className="skeleton-block" />
+            <div className="skeleton-block" />
+            <div className="skeleton-block" />
+          </div>
         ) : activeTab === 'Лента' ? (
-          <Feed orders={orders} userId={userId} onTakeOrder={takeOrder} notice={notice} />
+          <Feed
+            orders={orders}
+            userId={userId}
+            onTakeOrder={takeOrder}
+            onPlaceOrder={() => setActiveTab('Разместить')}
+            notice={notice}
+          />
         ) : activeTab === 'Разместить' ? (
           <PlaceOrder onPublish={publishOrder} />
         ) : activeTab === 'Мои заказы' ? (
-          <MyOrders orders={orders} userId={userId} onStatusChange={changeOrderStatus} />
+          <MyOrders
+            orders={orders}
+            userId={userId}
+            onStatusChange={changeOrderStatus}
+            onNavigateToFeed={() => setActiveTab('Лента')}
+          />
         ) : activeTab === 'Профиль' && profileLoading ? (
-          <p role="status" className="py-8 text-center text-sm text-secondary">
-            Загружаем профиль…
-          </p>
+          <div className="loading-skeleton" role="status" aria-label="Загружаем профиль">
+            <div className="skeleton-block" />
+            <div className="skeleton-block" />
+            <div className="skeleton-block" />
+          </div>
         ) : activeTab === 'Профиль' && profilePage === 'settings' ? (
           <section aria-label="Настройки">
             <div className="mb-4 flex items-center gap-3">
@@ -374,13 +439,13 @@ export default function App() {
               >
                 ← Назад
               </Button>
-              <h2 className="text-[22px] font-semibold tracking-tight">Настройки</h2>
+              <h2 className="text-xl font-semibold tracking-tight">Настройки</h2>
             </div>
             {[
               {
                 title: 'Тема',
                 content: (
-                  <div className="flex flex-col gap-2">
+                  <div className="theme-picker" role="radiogroup" aria-label="Тема оформления">
                     {([
                       ['light', 'Светлая'],
                       ['dark', 'Тёмная'],
@@ -388,7 +453,7 @@ export default function App() {
                     ] as const).map(([value, label]) => (
                       <label
                         key={value}
-                        className={`theme-option flex cursor-pointer items-center gap-2 px-3 py-2 text-sm ${
+                        className={`theme-segment ${
                           theme === value ? 'is-selected' : ''
                         }`}
                       >
@@ -398,8 +463,15 @@ export default function App() {
                           value={value}
                           checked={theme === value}
                           onChange={() => changeTheme(value)}
-                          className="control-accent h-4 w-4"
+                          className="sr-only"
                         />
+                        {theme === value && (
+                          <motion.span
+                            layoutId={reducedMotion ? undefined : 'active-theme-segment'}
+                            className="theme-segment-indicator"
+                            transition={{ type: 'spring', stiffness: 520, damping: 40 }}
+                          />
+                        )}
                         {label}
                       </label>
                     ))}
@@ -429,17 +501,14 @@ export default function App() {
             onOpenSettings={() => setProfilePage('settings')}
             onSave={saveUserProfile}
             onSignOut={signOut}
+            animateStamp={stampReceived}
           />
         ) : (
           <h2 className="text-base font-semibold">{activeTab}</h2>
         )}
       </main>
 
-      <nav
-        aria-label="Разделы"
-        className="card-background sticky bottom-0 grid grid-cols-4 gap-1 border-t border-default px-2 pt-1.5"
-        style={{ paddingBottom: 'calc(0.375rem + env(safe-area-inset-bottom, 0px))' }}
-      >
+      <nav aria-label="Разделы" className={`app-nav ${navKeyboardOpen ? 'is-keyboard-open' : ''}`}>
         {tabs.map((tab) => {
           const Icon = tabIcons[tab]
           return (
@@ -447,19 +516,21 @@ export default function App() {
               key={tab}
               type="button"
               aria-current={activeTab === tab ? 'page' : undefined}
-              className={`flex min-h-[52px] flex-col items-center justify-center gap-0.5 rounded-lg px-1 py-1 text-xs ${
-                activeTab === tab
-                  ? 'font-semibold text-accent'
-                  : 'text-secondary'
-              }`}
+              aria-label={tab}
               onClick={() => {
                 setNotice(null)
                 if (tab === 'Профиль') setProfilePage('profile')
                 setActiveTab(tab)
               }}
             >
-              <Icon aria-hidden="true" size={20} strokeWidth={1.8} />
-              {tab}
+              {activeTab === tab && !reducedMotion && (
+                <motion.span
+                  layoutId="active-navigation-indicator"
+                  className="app-nav-indicator"
+                  transition={{ type: 'spring', stiffness: 520, damping: 40 }}
+                />
+              )}
+              <Icon aria-hidden="true" size={22} strokeWidth={1.75} />
             </button>
           )
         })}
