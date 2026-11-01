@@ -22,6 +22,7 @@ import {
   loadProfile as fetchProfile,
   profileErrorMessage,
   saveProfile as upsertProfile,
+  uploadProfileAvatar,
 } from './lib/profiles'
 
 const tabs = ['Лента', 'Разместить', 'Мои заказы', 'Профиль'] as const
@@ -36,7 +37,7 @@ type Tab = (typeof tabs)[number]
 type Theme = 'light' | 'dark' | 'system'
 type ProfilePage = 'profile' | 'settings'
 
-const emptyProfile: UserProfile = { name: '', contact: '', skills: [] }
+const emptyProfile: UserProfile = { name: '', contact: '', skills: [], avatarUrl: '' }
 
 function initialTheme(): Theme {
   const theme = document.documentElement.dataset.theme
@@ -292,6 +293,20 @@ export default function App() {
     }
   }
 
+  async function saveUserAvatar(image: Blob): Promise<string> {
+    if (!supabase || !userId) {
+      throw new Error('Войдите в аккаунт, чтобы загрузить фотографию.')
+    }
+
+    try {
+      const avatarUrl = await uploadProfileAvatar(supabase, userId, image)
+      setProfile((current) => ({ ...current, avatarUrl }))
+      return avatarUrl
+    } catch (error) {
+      throw new Error(profileErrorMessage(error))
+    }
+  }
+
   async function signOut() {
     if (!supabase) return
     try {
@@ -501,6 +516,7 @@ export default function App() {
               userId={userId}
               onOpenSettings={() => setProfilePage('settings')}
               onSave={saveUserProfile}
+              onUploadAvatar={saveUserAvatar}
               onSignOut={signOut}
               animateStamp={stampReceived}
             />

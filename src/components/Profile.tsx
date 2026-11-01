@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { useReducedMotion } from 'motion/react'
 import { skills, type MyOrder, type Skill } from '../data/orders'
 import Card from './ui/Card'
@@ -10,6 +10,7 @@ export interface UserProfile {
   name: string
   contact: string
   skills: Skill[]
+  avatarUrl: string
 }
 
 interface ProfileProps {
@@ -18,8 +19,51 @@ interface ProfileProps {
   userId: string
   onOpenSettings: () => void
   onSave: (profile: UserProfile) => Promise<boolean>
+  onUploadAvatar: (image: Blob) => Promise<string>
   onSignOut: () => void
   animateStamp: boolean
+}
+
+const maxAvatarSize = 2 * 1024 * 1024
+const acceptedAvatarTypes = ['image/jpeg', 'image/png', 'image/webp']
+
+async function prepareAvatar(file: File): Promise<Blob> {
+  const imageUrl = URL.createObjectURL(file)
+  try {
+    const image = new Image()
+    image.src = imageUrl
+    try {
+      await image.decode()
+    } catch {
+      throw new Error('Не удалось прочитать изображение. Выберите другой файл.')
+    }
+
+    const cropSize = Math.min(image.naturalWidth, image.naturalHeight)
+    const cropX = (image.naturalWidth - cropSize) / 2
+    const cropY = (image.naturalHeight - cropSize) / 2
+    const canvas = document.createElement('canvas')
+    canvas.width = 512
+    canvas.height = 512
+    const context = canvas.getContext('2d')
+    if (!context) throw new Error('Не удалось подготовить изображение. Выберите другой файл.')
+
+    context.drawImage(image, cropX, cropY, cropSize, cropSize, 0, 0, 512, 512)
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        (result) => result ? resolve(result) : reject(
+          new Error('Не удалось подготовить изображение. Выберите другой файл.'),
+        ),
+        'image/webp',
+        0.9,
+      )
+    })
+    if (blob.type !== 'image/webp') {
+      throw new Error('Ваш браузер не поддерживает сохранение изображения в WebP.')
+    }
+    return blob
+  } finally {
+    URL.revokeObjectURL(imageUrl)
+  }
 }
 
 export function FirstOrderStamp({
@@ -56,13 +100,17 @@ export default function Profile({
   userId,
   onOpenSettings,
   onSave,
+  onUploadAvatar,
   onSignOut,
   animateStamp,
 }: ProfileProps) {
+  const avatarInputRef = useRef<HTMLInputElement>(null)
   const [name, setName] = useState(profile.name)
   const [contact, setContact] = useState(profile.contact)
   const [selectedSkills, setSelectedSkills] = useState<Skill[]>(profile.skills)
   const [nameError, setNameError] = useState('')
+  const [avatarError, setAvatarError] = useState('')
+  const [avatarUploading, setAvatarUploading] = useState(false)
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
 
@@ -70,7 +118,7 @@ export default function Profile({
     setName(profile.name)
     setContact(profile.contact)
     setSelectedSkills(profile.skills)
-  }, [profile])
+  }, [profile.name, profile.contact, profile.skills])
 
   const paidOrders = orders.filter(
     (order) => order.takenBy === userId && order.status === 'paid',
@@ -83,6 +131,36 @@ export default function Profile({
   const previousEarned = useRef(totalEarned)
   const reducedMotion = useReducedMotion()
   const earned = paidOrders.length > 0
+
+  async function handleAvatarChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+
+    if (!acceptedAvatarTypes.includes(file.type)) {
+      setAvatarError('Выберите изображение в формате JPG, PNG или WebP.')
+      return
+    }
+    if (file.size > maxAvatarSize) {
+      setAvatarError('Размер изображения не должен превышать 2 МБ.')
+      return
+    }
+
+    setAvatarError('')
+    setAvatarUploading(true)
+    try {
+      const image = await prepareAvatar(file)
+      await onUploadAvatar(image)
+    } catch (error) {
+      setAvatarError(
+        error instanceof Error
+          ? error.message
+          : 'Не удалось загрузить фотографию. Попробуйте ещё раз.',
+      )
+    } finally {
+      setAvatarUploading(false)
+    }
+  }
 
   useEffect(() => {
     if (previousEarned.current === totalEarned) return
@@ -114,7 +192,12 @@ export default function Profile({
       return
     }
 
-    const nextProfile = { name: trimmedName, contact: contact.trim(), skills: selectedSkills }
+    const nextProfile = {
+      name: trimmedName,
+      contact: contact.trim(),
+      skills: selectedSkills,
+      avatarUrl: profile.avatarUrl,
+    }
     setNameError('')
     setSaving(true)
     try {
@@ -134,6 +217,57 @@ export default function Profile({
   return (
     <section aria-label="Профиль">
       <Card as="form" className="mb-3 p-4" noValidate onSubmit={submitProfile}>
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex flex-col items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              className="profile-avatar"
+              aria-label="Загрузить фотографию профиля"
+              aria-busy={avatarUploading || undefined}
+              disabled={avatarUploading}
+              onClick={() => avatarInputRef.current?.click()}
+            >
+              {profile.avatarUrl ? (
+                <img
+                  key={profile.avatarUrl}
+                  src={profile.avatarUrl}
+                  alt=""
+                  className="profile-avatar-image"
+                />
+              ) : (
+                <span aria-hidden="true" className="profile-avatar-initials">
+                  {name.trim().split(/\s+/).filter(Boolean).slice(0, 2)
+                    .map((part) => Array.from(part)[0])
+                    .join('')
+                    .toLocaleUpperCase('ru-RU') || 'П'}
+                </span>
+              )}
+              {avatarUploading && (
+                <span className="profile-avatar-overlay" role="status" aria-label="Загружаем фотографию">
+                  <span className="profile-avatar-spinner" aria-hidden="true" />
+                </span>
+              )}
+            </Button>
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleAvatarChange}
+              hidden
+            />
+            {avatarError && (
+              <p role="alert" className="text-error text-center text-xs">
+                {avatarError}
+              </p>
+            )}
+          </div>
+          <div>
+            <p className="text-base font-semibold">{name.trim() || 'Профиль'}</p>
+            <p className="mt-1 text-sm text-secondary">Нажмите на фото, чтобы изменить</p>
+          </div>
+        </div>
+
         <Input
           id="profile-name"
           label="Имя"
@@ -195,7 +329,7 @@ export default function Profile({
 
         <Button
           type="submit"
-          disabled={saving}
+          disabled={saving || avatarUploading}
           variant="primary"
           loading={saving}
           loadingLabel="Сохраняем профиль"
